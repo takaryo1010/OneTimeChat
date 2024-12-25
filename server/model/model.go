@@ -11,7 +11,7 @@ import (
 type RoomManager struct {
 	Rooms           map[string]*Room // ルームのマップ
 	ExpireSortRooms []*Room          // 期限順に並べたルーム
-	mu              sync.Mutex       // スレッドセーフにするためのミューテックス
+	Mu              sync.Mutex       // スレッドセーフにするためのミューテックス
 }
 
 // Room は個々のチャットルームを表す構造体
@@ -23,7 +23,7 @@ type Room struct {
 	RequiresAuth           bool       // 認証が必要かどうか
 	UnauthenticatedClients []*Client  // ルームへの接続許可待ちのクライアント
 	AuthenticatedClients   []*Client  //ルームへの接続許可がされているクライアント
-	mu                     sync.Mutex // スレッドセーフにするためのミューテックス
+	Mu                     sync.Mutex // スレッドセーフにするためのミューテックス
 }
 
 // Client はチャットルームに参加しているユーザーを表す構造体
