@@ -1,0 +1,27 @@
+{
+	"name": "OneTimeChat Dev Container",
+	"build": {
+	  "dockerfile": "./Dockerfile",
+	  "context": "."
+	},
+	"postCreateCommand": "go mod tidy && npm install --prefix client",
+	"customizations": {
+	  "vscode": {
+		"extensions": [
+		  "golang.Go",                // Go開発用拡張
+		  "dbaeumer.vscode-eslint",   // ESLint
+		  "esbenp.prettier-vscode"    // Prettier
+		]
+	  }
+	},
+	"settings": {
+	  "terminal.integrated.defaultProfile.linux": "bash"
+	},
+	"mounts": [
+	  "source=${localWorkspaceFolder},target=/workspace,type=bind"
+	],
+	"workspaceFolder": "/workspace",
+	"forwardPorts": [8080, 3000], // Goサーバー用: 8080, React用: 3000
+	"remoteUser": "devuser"
+  }
+  
