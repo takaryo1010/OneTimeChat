@@ -16,21 +16,20 @@ type RoomManager struct {
 
 // Room は個々のチャットルームを表す構造体
 type Room struct {
-	ID           string     // ルームID
-	Name         string     // ルーム名
-	Owner        string     // ルームのオーナー
-	Expires      time.Time  // 有効期限
-	RequiresAuth bool       // 認証が必要かどうか
-	UnauthenticatedClients  []*Client  // ルームへの接続許可待ちのクライアント
-	AuthenticatedClients   []*Client //ルームへの接続許可がされているクライアント
-
-	mu           sync.Mutex // スレッドセーフにするためのミューテックス
+	ID                     string     // ルームID
+	Name                   string     // ルーム名
+	Owner                  string     // ルームのオーナー
+	Expires                time.Time  // 有効期限
+	RequiresAuth           bool       // 認証が必要かどうか
+	UnauthenticatedClients []*Client  // ルームへの接続許可待ちのクライアント
+	AuthenticatedClients   []*Client  //ルームへの接続許可がされているクライアント
+	mu                     sync.Mutex // スレッドセーフにするためのミューテックス
 }
 
 // Client はチャットルームに参加しているユーザーを表す構造体
 type Client struct {
-	Name            string          // クライアント名
-	Ws              *websocket.Conn // WebSocket接続
+	Name string          // クライアント名
+	Ws   *websocket.Conn // WebSocket接続
 }
 
 // Message はチャットメッセージを表す構造体
