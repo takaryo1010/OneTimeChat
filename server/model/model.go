@@ -11,7 +11,7 @@ import (
 type RoomManager struct {
 	Rooms           map[string]*Room // ルームのマップ
 	ExpireSortRooms []*Room          // 期限順に並べたルーム
-	mu              sync.Mutex       // スレッドセーフにするためのミューテックス
+	Mu              sync.Mutex       // スレッドセーフにするためのミューテックス
 }
 
 // Room は個々のチャットルームを表す構造体
