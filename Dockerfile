@@ -1,8 +1,16 @@
-# Node.js用のベースイメージを使用
-FROM node:23
+# Ubuntu 22.04 (LTS)をベースに使用
+FROM ubuntu:22.04
 
-# Gitをインストール
-RUN apt-get update && apt-get install -y git
+# ミラーサーバーを変更し、より高速なサーバーを使用
+RUN sed -i 's/archive.ubuntu.com/ftp.jaist.ac.jp/g' /etc/apt/sources.list
+
+# 必要なパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    nodejs \
+    npm \
+    && apt-get clean
 
 # Go環境をインストール
 RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
@@ -12,8 +20,12 @@ RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
 # Goの環境変数を設定
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+# 作業ディレクトリを作成
 RUN mkdir ./workspace
 
 # ポートの設定
 EXPOSE 3000 8080
+
+# 作業ディレクトリに移動
+WORKDIR /workspace
 
