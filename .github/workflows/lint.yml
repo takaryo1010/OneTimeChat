@@ -26,4 +26,4 @@ jobs:
       - name: testing
         working-directory: server   # テスト実行時もserverをルートに指定
         run: go test -shuffle on ./...
-      continue-on-error: false
+        continue-on-error: false
