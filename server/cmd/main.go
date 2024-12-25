@@ -79,8 +79,8 @@ func handleMessages() {
 
 func main() {
 	// ルートディレクトリ
-	// fs := http.FileServer(http.Dir("./public"))
-	// http.Handle("/", fs)
+	fs := http.FileServer(http.Dir("./public"))
+	http.Handle("/", fs)
 
 	go handleMessages()
 
