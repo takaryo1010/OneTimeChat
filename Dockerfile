@@ -12,6 +12,8 @@ RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
 # Goの環境変数を設定
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+RUN mkdir ./workspace
+
 # ポートの設定
 EXPOSE 3000 8080
 

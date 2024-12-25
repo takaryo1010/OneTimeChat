@@ -2,8 +2,6 @@ version: '3'
 services:
   dev-env:
     build: .
-    volumes:
-      - .:/workspace
     ports:
       - "3000:3000"  # Reactの開発用サーバー
       - "8080:8080"  # Goの開発用サーバー（任意）
