@@ -29,6 +29,7 @@ type Room struct {
 // Client はチャットルームに参加しているユーザーを表す構造体
 type Client struct {
 	Name string          // クライアント名
+	SessionID string     // セッションID
 	Ws   *websocket.Conn // WebSocket接続
 }
 
