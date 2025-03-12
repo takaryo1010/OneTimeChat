@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,17 +24,7 @@ func (mc *MainController) WebSocketHandler(c echo.Context) error {
 	}
 	return nil
 }
-func GenerateSessionID() (string, error) {
-	//TODO:同じセッションIDが生成されないようにする
-	// 16 バイトのランダムなデータを生成
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	// base64 エンコードしてセッションIDとして利用
-	return base64.URLEncoding.EncodeToString(b), nil
-}
+
 func (mc *MainController) CreateRoom(c echo.Context) error {
 	// セッションIDの生成
 	sessionID, err := GenerateSessionID()
