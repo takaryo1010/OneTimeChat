@@ -20,6 +20,14 @@ RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
 # Goの環境変数を設定
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+# Goのリンターをインストール
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.7
+
+
+# Goのパスを設定
+RUN echo 'export PATH=$(go env GOPATH)/bin:$PATH' >> ~/.bashrc
+RUN source ~/.bashrc
+
 # 作業ディレクトリを作成
 RUN mkdir ./workspace
 
