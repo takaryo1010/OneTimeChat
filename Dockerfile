@@ -37,7 +37,7 @@ ENV PATH="${GOPATH}/bin:${PATH}"
 
 # Goのリンターをインストール
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${GOPATH}/bin v1.64.7
-
+RUN go install golang.org/x/tools/cmd/goimports@latest
 # 作業ディレクトリを作成
 WORKDIR /workspace
 
