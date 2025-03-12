@@ -1,92 +1,105 @@
 import React, { useState } from 'react';
 import './App.css';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 interface Message {
   sender: string;
   content: string;
 }
-
 const App: React.FC = () => {
   const [roomName, setRoomName] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [sessionID, setSessionID] = useState<string>('');
-  const [roomID, setRoomID] = useState<string>('');  // 追加: ルームID用の状態
+  const [roomID, setRoomID] = useState<string>('');
+
+  const getCookie = (name: string) => {
+    const cookies = document.cookie.split('; ');
+    const cookie = cookies.find(row => row.startsWith(`${name}=`));
+    return cookie ? cookie.split('=')[1] : null;
+  };
 
   const connectToRoom = async () => {
     const response = await fetch('http://localhost:8080/room', {
       method: 'POST',
       body: JSON.stringify({ name: roomName, owner: clientName }),
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
-  
+
     if (response.ok) {
       const roomData = await response.json();
-      setSessionID(roomData.sessionID); // セッションIDを保存
-      setRoomID(roomData.id); // ルームIDを保存
-      // WebSocket接続の開始
-      const socketInstance = io('http://localhost:8080', {
-        query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
-        transports: ['websocket'], // WebSocketで接続
-      });
-  
-      socketInstance.on('message', (message: string) => {
-        setMessages((prevMessages) => [...prevMessages, { sender: 'Server', content: message }]);
-      });
-  
-      setSocket(socketInstance);
+      console.log('Room creation response:', roomData);
+      console.log(roomData.ID);
+      const cookiesSessionID = getCookie('session_id');
+      setSessionID(cookiesSessionID); // セッションIDを保存
+      setRoomID(roomData.ID); // ルームIDを保存
+
+      const ws = new WebSocket(`ws://localhost:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${sessionID}`);
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence }]);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
+      setSocket(ws);
     } else {
       alert('Room creation failed');
     }
   };
-  
+
   const joinRoom = async () => {
     const response = await fetch(`http://localhost:8080/room/${roomID}`, {
       method: 'POST',
       body: JSON.stringify({ client_name: clientName }),
       headers: { 'Content-Type': 'application/json' },
     });
-  
+
     if (response.ok) {
-      // ここでセッションIDを設定する必要がある場合
-      console.log('Join room response:', response);
       const roomData = await response.json();
-      console.log(roomData);
       setSessionID(roomData.sessionID); // セッションIDを保存
       setRoomID(roomData.roomID); // ルームIDを保存
-  
-      const socketInstance = io('http://localhost:8080', {
-        query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
-        transports: ['websocket'],
-      });
-  
-      socketInstance.on('message', (message: string) => {
-        setMessages((prevMessages) => [...prevMessages, { sender: 'Server', content: message }]);
-      });
-  
-      setSocket(socketInstance);
+
+      const ws = new WebSocket(`ws://localhost:8080/ws?room_id=${roomID}&client_name=${clientName}&session_id=${sessionID}`);
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence }]);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
+      setSocket(ws);
     } else {
       alert('Failed to join the room');
     }
   };
-  
-  
 
-  // メッセージ送信
   const sendMessage = (message: string) => {
     if (socket) {
-      socket.emit('message', message);
-      setMessages((prevMessages) => [...prevMessages, { sender: clientName, content: message }]);
+      socket.send(message);
     }
   };
 
   return (
-    <div className="App">
-      <h1>OneTime Chat</h1>
+      <div className="App">
+    <h1>OneTime Chat</h1>
 
-      {/* ルーム名とクライアント名の入力 */}
+    {/* ルーム名とクライアント名の入力 */}
+    <div className="input-group">
       <input
         type="text"
         placeholder="Enter Room Name"
@@ -100,8 +113,10 @@ const App: React.FC = () => {
         onChange={(e) => setClientName(e.target.value)}
       />
       <button onClick={connectToRoom}>Create Room</button>
+    </div>
 
-      {/* 既存のルームIDを入力して参加 */}
+    {/* 既存のルームIDを入力して参加 */}
+    <div className="input-group">
       <input
         type="text"
         placeholder="Enter Room ID to Join"
@@ -109,18 +124,22 @@ const App: React.FC = () => {
         onChange={(e) => setRoomID(e.target.value)}
       />
       <button onClick={joinRoom}>Join Room</button>
+    </div>
 
-      {/* セッションID表示 */}
+    {/* セッションID表示 */}
+    <div className="room-info">
       {sessionID && <p>ROOM ID: {roomID}</p>}
+    </div>
 
-      {/* メッセージ表示 */}
-      <div>
-        {messages.map((msg, index) => (
-          <p key={index}><strong>{msg.sender}:</strong> {msg.content}</p>
-        ))}
-      </div>
+    {/* メッセージ表示 */}
+    <div className="messages">
+      {messages.map((msg, index) => (
+        <p key={index}><strong>{msg.sender}:</strong> {msg.content}</p>
+      ))}
+    </div>
 
-      {/* メッセージ送信フォーム */}
+    {/* メッセージ送信フォーム */}
+    <div className="message-form">
       <input
         type="text"
         placeholder="Type a message"
@@ -132,6 +151,8 @@ const App: React.FC = () => {
         }}
       />
     </div>
+  </div>
+
   );
 };
 

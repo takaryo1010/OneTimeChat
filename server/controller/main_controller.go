@@ -19,7 +19,7 @@ type MainController struct {
 func (mc *MainController) WebSocketHandler(c echo.Context) error {
 	roomID := c.QueryParam("room_id")
 	clientName := c.QueryParam("client_name")
-
+	fmt.Println("WebSocket connection requested for room:", roomID, "client:", clientName)
 	err := mc.RoomUsecase.HandleWebSocketConnection(c.Response(), c.Request(), roomID, clientName)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})

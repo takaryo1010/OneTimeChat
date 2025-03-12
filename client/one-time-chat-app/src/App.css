@@ -1,5 +1,15 @@
 .App {
   text-align: center;
+  display: flex;
+  flex-direction: column;  /* 要素を縦に並べる */
+  align-items: center;     /* 水平に中央揃え */
+  height: 100vh;           /* ビューポートの高さに合わせる */
+}
+
+.input-group {
+  display: flex;           /* 横並びにする */
+  gap: 10px;               /* 入力フィールド間のスペース */
+  margin-bottom: 20px;     /* 入力フィールドとボタンの間のスペース */
 }
 
 input {
@@ -13,10 +23,33 @@ button {
   font-size: 16px;
 }
 
-div {
+.room-info {
+  margin-bottom: 20px;     /* ルームID表示とメッセージの間にスペース */
+}
+
+.messages {
   margin-top: 20px;
   padding: 10px;
   border: 1px solid #ccc;
-  max-height: 300px;
+  max-height: 600px;
   overflow-y: scroll;
+  width: 60%;
+}
+
+.message-form {
+  display: flex;
+  justify-content: center; /* メッセージ入力欄を中央に配置 */
+  margin-top: 20px;
+}
+
+.message-form input {
+  padding: 10px;
+  font-size: 16px;
+  width: 300px; /* 入力欄の幅を調整 */
+}
+
+.message-form button {
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-left: 10px;
 }
