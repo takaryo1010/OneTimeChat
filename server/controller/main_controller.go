@@ -52,10 +52,9 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 
-
 	// フォームからルーム名を取得
 	type CreateRoomRequest struct {
-		Name string `json:"name"`
+		Name  string `json:"name"`
 		Owner string `json:"owner"`
 	}
 	var req CreateRoomRequest
@@ -102,18 +101,20 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	fmt.Println("Client name:", clientName)
 
 	sessionID, err := GenerateSessionID()
-
-	err = mc.RoomUsecase.JoinRoom(roomID, clientName,sessionID)
 	if err != nil {
-	  return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate session ID"})
 	}
-  
+
+	err = mc.RoomUsecase.JoinRoom(roomID, clientName, sessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	// 部屋に参加したことを確認
 	fmt.Println("Client joined:", clientName)
-	fmt.Println("Room ID:", roomID,"Session ID:",sessionID)
+	fmt.Println("Room ID:", roomID, "Session ID:", sessionID)
 
-	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID,"sessionID":sessionID})
-  }
-  
+	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID, "sessionID": sessionID})
+}
 
 // Other handlers (GetParticipants, UpdateRoomSettings, etc.) can follow the same pattern.
