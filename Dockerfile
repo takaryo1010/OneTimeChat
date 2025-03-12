@@ -10,8 +10,15 @@ RUN apt-get update && apt-get install -y \
     git \
     nodejs \
     npm \
+    language-pack-ja\
+    locales\
     && apt-get clean
+# bashの日本語化
+RUN locale-gen
 
+RUN export LC_ALL=ja_JP.utf8
+
+ENV LANG=ja_JP.UTF-8
 # Go環境をインストール
 RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
     && tar -C /usr/local -xvzf go1.23.0.linux-amd64.tar.gz \
@@ -20,19 +27,19 @@ RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
 # Goの環境変数を設定
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+# GOPATHの設定
+ENV GOPATH="/root/go"
+ENV PATH="${GOPATH}/bin:${PATH}"
+
 # Goのリンターをインストール
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.7
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${GOPATH}/bin v1.64.7
 
+#OB 作業ディレクトリを作成
+WORKDIR /workspace
 
-# Goのパスを設定
-RUN echo 'export PATH=$(go env GOPATH)/bin:$PATH' >> ~/.bashrc
-
-# 作業ディレクトリを作成
-RUN mkdir ./workspace
+# リポジトリをクローン
+RUN git clone https://github.com/takaryo1010/OneTimeChat.git .
 
 # ポートの設定
 EXPOSE 3000 8080
-
-# 作業ディレクトリに移動
-WORKDIR /workspace
 
