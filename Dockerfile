@@ -26,7 +26,6 @@ RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/ins
 
 # Goのパスを設定
 RUN echo 'export PATH=$(go env GOPATH)/bin:$PATH' >> ~/.bashrc
-RUN source ~/.bashrc
 
 # 作業ディレクトリを作成
 RUN mkdir ./workspace
