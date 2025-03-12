@@ -8,17 +8,15 @@ import (
 )
 
 func PeriodicTask(rm *model.RoomManager) {
-	ticker := time.NewTicker(1 *time.Second) // 1分ごとに実行
+	ticker := time.NewTicker(5 *time.Minute) // 1分ごとに実行
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
+	for range ticker.C {
 			// fmt.Println("定期タスク実行:", time.Now())
 			// 期限切れのルームを削除
 			deleteExpireSortRooms( rm)
 			// ここでDB更新やログ処理などを行う
-		}
+		
 	}
 }
 
