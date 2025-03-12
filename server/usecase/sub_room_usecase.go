@@ -21,6 +21,7 @@ func generateRoomID(rm *model.RoomManager) string {
 
 }
 
+
 func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room){
 	// 二分探索で期限切れのルームを探し、適切な位置に挿入
 	// 期限切れのルームがない場合は、最後尾に追加

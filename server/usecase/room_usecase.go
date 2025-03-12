@@ -31,7 +31,7 @@ func NewRoomUsecase() *RoomUsecase {
 }
 
 // CreateRoom creates a new room.
-func (uc *RoomUsecase) CreateRoom(name, owner string) (*model.Room, error) {
+func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*model.Room, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
@@ -54,6 +54,8 @@ func (uc *RoomUsecase) CreateRoom(name, owner string) (*model.Room, error) {
 	// オーナーを部屋に追加
 	client := &model.Client{
 		Name: owner,
+		SessionID: generatedSessionID,
+		Ws: &websocket.Conn{},
 	}
 
 	room.AuthenticatedClients = append(room.AuthenticatedClients, client)
@@ -74,28 +76,37 @@ func (uc *RoomUsecase) GetRoomByID(roomID string) (*model.Room, error) {
 }
 
 // JoinRoom allows a client to join a room.
-func (uc *RoomUsecase) JoinRoom(roomID, clientName string) error {
+func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) error {
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
-
+	
 	if !exists {
 		return errors.New("room not found")
 	}
-
+	
 	client := &model.Client{
 		Name: clientName,
+		SessionID: generatedSessionID,
+		Ws: &websocket.Conn{},
 	}
-
+	
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 	if room.RequiresAuth {
 		room.AuthenticatedClients = append(room.AuthenticatedClients, client)
-		return nil
 	} else {
 		room.UnauthenticatedClients = append(room.UnauthenticatedClients, client)
-		return nil
 	}
+		
+	fmt.Println("Authenticated Clients")
+	for _, client := range room.AuthenticatedClients {
+		fmt.Println("Name: ", client.Name)
+		fmt.Println("SessionID: ", client.SessionID)
+		}
+	fmt.Println("----------------------")
+	return nil
+
 }
 
 // HandleWebSocketConnection handles a WebSocket connection for a client.

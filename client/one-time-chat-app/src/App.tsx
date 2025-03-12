@@ -25,10 +25,10 @@ const App: React.FC = () => {
     if (response.ok) {
       const roomData = await response.json();
       setSessionID(roomData.sessionID); // セッションIDを保存
-  
+      setRoomID(roomData.id); // ルームIDを保存
       // WebSocket接続の開始
       const socketInstance = io('http://localhost:8080', {
-        query: { room_id: roomData.id, client_name: clientName, session_id: roomData.sessionID },
+        query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
         transports: ['websocket'], // WebSocketで接続
       });
   
@@ -51,8 +51,11 @@ const App: React.FC = () => {
   
     if (response.ok) {
       // ここでセッションIDを設定する必要がある場合
+      console.log('Join room response:', response);
       const roomData = await response.json();
+      console.log(roomData);
       setSessionID(roomData.sessionID); // セッションIDを保存
+      setRoomID(roomData.roomID); // ルームIDを保存
   
       const socketInstance = io('http://localhost:8080', {
         query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
@@ -108,7 +111,7 @@ const App: React.FC = () => {
       <button onClick={joinRoom}>Join Room</button>
 
       {/* セッションID表示 */}
-      {sessionID && <p>Session ID: {sessionID}</p>}
+      {sessionID && <p>ROOM ID: {roomID}</p>}
 
       {/* メッセージ表示 */}
       <div>

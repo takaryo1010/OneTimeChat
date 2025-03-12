@@ -27,6 +27,7 @@ func (mc *MainController) WebSocketHandler(c echo.Context) error {
 	return nil
 }
 func GenerateSessionID() (string, error) {
+	//TODO:同じセッションIDが生成されないようにする
 	// 16 バイトのランダムなデータを生成
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
@@ -51,14 +52,23 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 
-	// オーナー情報はセッションIDを基に後で取得するために設定する（仮にユーザーIDを使用）
-	owner := "someUserID" // ここでは仮のユーザーIDを使用します
 
 	// フォームからルーム名を取得
-	roomName := c.FormValue("name")
+	type CreateRoomRequest struct {
+		Name string `json:"name"`
+		Owner string `json:"owner"`
+	}
+	var req CreateRoomRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
 
+	roomName := req.Name
+	fmt.Println("Room name:", roomName)
+	owner := req.Owner
+	fmt.Println("Owner:", owner)
 	// ルーム作成処理
-	room, err := mc.RoomUsecase.CreateRoom(roomName, owner)
+	room, err := mc.RoomUsecase.CreateRoom(roomName, owner, sessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
@@ -81,17 +91,28 @@ func (mc *MainController) GetRoom(c echo.Context) error {
 // JoinRoom allows a client to join a room.
 func (mc *MainController) JoinRoom(c echo.Context) error {
 	roomID := c.Param("id")
-	clientName := c.FormValue("client_name")
-  
-	err := mc.RoomUsecase.JoinRoom(roomID, clientName)
+	type JoinRoomRequest struct {
+		ClientName string `json:"client_name"`
+	}
+	var req JoinRoomRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+	clientName := req.ClientName
+	fmt.Println("Client name:", clientName)
+
+	sessionID, err := GenerateSessionID()
+
+	err = mc.RoomUsecase.JoinRoom(roomID, clientName,sessionID)
 	if err != nil {
 	  return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
   
 	// 部屋に参加したことを確認
 	fmt.Println("Client joined:", clientName)
-	fmt.Println("Room ID:", roomID)
-	return c.NoContent(http.StatusOK)
+	fmt.Println("Room ID:", roomID,"Session ID:",sessionID)
+
+	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID,"sessionID":sessionID})
   }
   
 
