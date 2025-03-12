@@ -43,7 +43,7 @@ func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*mode
 		ID:                     roomID,
 		Name:                   name,
 		Owner:                  owner,
-		Expires:                time.Now().Add(24 * time.Hour), // 例: 24時間有効
+		Expires:                time.Now().Add(5 * time.Second ), // 例: 24時間有効
 		RequiresAuth:           true,
 		UnauthenticatedClients: []*model.Client{},
 		AuthenticatedClients:   []*model.Client{}, // 初期化
