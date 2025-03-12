@@ -30,7 +30,7 @@ func NewRoomUsecase() *RoomUsecase {
 	}
 }
 
-// CreateRoom creates a new room.
+// CreateRoom 新しい部屋を作る
 func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*model.Room, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
