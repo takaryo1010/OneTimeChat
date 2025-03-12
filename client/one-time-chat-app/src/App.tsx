@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 interface Message {
   sender: string;
@@ -15,28 +15,55 @@ const App: React.FC = () => {
   const [sessionID, setSessionID] = useState<string>('');
   const [roomID, setRoomID] = useState<string>('');  // 追加: ルームID用の状態
 
+  const getCookie = (name: string) => {
+    const cookies = document.cookie.split('; ');
+    const cookie = cookies.find(row => row.startsWith(`${name}=`));
+    return cookie ? cookie.split('=')[1] : null;
+  };
+
+
+
   const connectToRoom = async () => {
     const response = await fetch('http://localhost:8080/room', {
       method: 'POST',
       body: JSON.stringify({ name: roomName, owner: clientName }),
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
   
     if (response.ok) {
       const roomData = await response.json();
-      setSessionID(roomData.sessionID); // セッションIDを保存
-      setRoomID(roomData.id); // ルームIDを保存
+      console.log('Room creation response:', roomData);
+      console.log(roomData.ID);
+      const cookiesSessionID = getCookie('session_id');
+      setSessionID(cookiesSessionID); // セッションIDを保存
+      setRoomID(roomData.ID); // ルームIDを保存
+
+
+
       // WebSocket接続の開始
-      const socketInstance = io('http://localhost:8080', {
-        query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
-        transports: ['websocket'], // WebSocketで接続
-      });
+      const ws = new WebSocket(`ws://localhost:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${sessionID}`);
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const roomID = data.room_id;
+        const sentence = data.sentence;
+        const sender = data.sender;
+        const timestamp = data.timestamp;
+        setMessages((prevMessages) => [...prevMessages, { sender: sender, content: sentence }]);
+        
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
   
-      socketInstance.on('message', (message: string) => {
-        setMessages((prevMessages) => [...prevMessages, { sender: 'Server', content: message }]);
-      });
-  
-      setSocket(socketInstance);
+   
+      setSocket(ws);
     } else {
       alert('Room creation failed');
     }
@@ -57,16 +84,27 @@ const App: React.FC = () => {
       setSessionID(roomData.sessionID); // セッションIDを保存
       setRoomID(roomData.roomID); // ルームIDを保存
   
-      const socketInstance = io('http://localhost:8080', {
-        query: { room_id: roomID, client_name: clientName, session_id: roomData.sessionID },
-        transports: ['websocket'],
-      });
+      const ws = new WebSocket(`ws://localhost:8080/ws?room_id=${roomID}&client_name=${clientName}&session_id=${sessionID}`);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
   
-      socketInstance.on('message', (message: string) => {
-        setMessages((prevMessages) => [...prevMessages, { sender: 'Server', content: message }]);
-      });
-  
-      setSocket(socketInstance);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const roomID = data.room_id;
+        const sentence = data.sentence;
+        const sender = data.sender;
+        const timestamp = data.timestamp;
+        setMessages((prevMessages) => [...prevMessages, { sender: sender, content: sentence }]);
+        
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
+      setSocket(ws);
     } else {
       alert('Failed to join the room');
     }
@@ -77,8 +115,8 @@ const App: React.FC = () => {
   // メッセージ送信
   const sendMessage = (message: string) => {
     if (socket) {
-      socket.emit('message', message);
-      setMessages((prevMessages) => [...prevMessages, { sender: clientName, content: message }]);
+      socket.send(message);
+      // setMessages((prevMessages) => [...prevMessages, { sender: clientName, content: message }]);
     }
   };
 

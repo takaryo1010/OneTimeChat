@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
 	"github.com/takaryo1010/OneTimeChat/server/model"
@@ -15,6 +16,8 @@ type RoomUsecase struct {
 	RoomManager *model.RoomManager
 	upgrader    websocket.Upgrader
 }
+
+
 
 // NewRoomUsecase creates a new RoomUsecase instance.
 func NewRoomUsecase() *RoomUsecase {
@@ -55,7 +58,7 @@ func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*mode
 	client := &model.Client{
 		Name: owner,
 		SessionID: generatedSessionID,
-		Ws: &websocket.Conn{},
+		Ws: nil,
 	}
 
 	room.AuthenticatedClients = append(room.AuthenticatedClients, client)
@@ -88,7 +91,7 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 	client := &model.Client{
 		Name: clientName,
 		SessionID: generatedSessionID,
-		Ws: &websocket.Conn{},
+		Ws: nil,
 	}
 	
 	room.Mu.Lock()
@@ -111,6 +114,7 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 
 // HandleWebSocketConnection handles a WebSocket connection for a client.
 func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.Request, roomID, clientName string) error {
+	// 部屋を取得
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
@@ -119,38 +123,58 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 		return errors.New("room not found")
 	}
 
+	// WebSocket 接続のアップグレード
 	conn, err := uc.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return err
 	}
 
+	// 部屋内に既に存在する仮のクライアントを検索
+	var client *model.Client
+	for _, c := range room.AuthenticatedClients {
+		if c.Name == clientName {
+			client = c
+			break
+		}
+	}
 
-	
+	if client == nil {
+		// 仮のクライアントが見つからない場合はエラーを返す
+		return errors.New("client not found in the room")
+	}
 
-	room.Mu.Lock()
-	defer room.Mu.Unlock()
+	// 仮のクライアントの WebSocket 接続を更新
+	client.Ws = conn
 
-	// WebSocketの受信ループ
+	// WebSocket 接続を確立したことをログ出力
+	fmt.Printf("Client %s connected to room %s\n", clientName, roomID)
+
+	// WebSocket のメッセージ受信ループを開始
 	go func() {
-		defer conn.Close()
+		defer conn.Close() // 関数が終了したら接続を閉じる
+
 		for {
+			// クライアントからメッセージを受信
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
+				// メッセージの読み込みエラーが発生した場合、ループを終了
 				break
 			}
-			fmt.Println(string(msg))
-			uc.broadcastToRoom(roomID, msg)
+			// 受信したメッセージを他のクライアントにブロードキャスト
+			uc.broadcastToRoom(roomID, msg,clientName)
 		}
 	}()
 
 	return nil
 }
 
-// broadcastToRoom broadcasts a message to all authenticated clients in a room.
-func (uc *RoomUsecase) broadcastToRoom(roomID string, message []byte) {
+// broadcastToRoom broadcasts a message with sender information, room ID, and timestamp.
+func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender string) {
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
+
+	stringSentence := string(sentence)
 
 	if !exists {
 		return
@@ -159,10 +183,27 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, message []byte) {
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 
+	// メッセージデータを作成
+	message := model.Message{
+		RoomID:    roomID,
+		Sentence:  stringSentence,
+		Sender:    sender,
+		Timestamp: time.Now().Unix(), // 現在のUNIXタイムスタンプ
+	}
+
+	// メッセージをJSONにエンコード
+	messageJSON, err := json.Marshal(message)
+	if err != nil {
+		// エンコードエラー時の処理
+		return
+	}
+
+	// 各クライアントにJSONメッセージを送信
 	for _, client := range room.AuthenticatedClients {
-		err := client.Ws.WriteMessage(websocket.TextMessage, message)
+		err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
 		if err != nil {
 			client.Ws.Close()
 		}
 	}
 }
+
