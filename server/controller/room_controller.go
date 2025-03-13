@@ -124,3 +124,25 @@ func (mc *MainController) GetParticipants(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, participants)
 }
+
+// ルームの設定変更(オーナー専用)
+//RoomNameとrequiresAuthをjsonで必ず受け取る
+func (mc *MainController) UpdateRoomSettings(c echo.Context) error {
+	roomID := c.Param("id")
+	ownerSessionID := c.QueryParam("owner_session_id")
+	var req model.Room
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+	fmt.Println(req)
+	roomName := req.Name
+	fmt.Println("Room name:", roomName)
+	owner := req.Owner
+	fmt.Println("Owner:", owner)
+	// ルーム作成処理
+	room, err := mc.RoomUsecase.UpdateRoomSettings(roomID, req, ownerSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, room)
+}

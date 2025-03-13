@@ -154,3 +154,22 @@ func (uc *RoomUsecase) Authenticate(roomID, client_session_id, owner_session_id 
 
 	return nil
 }
+
+func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings model.Room,owner_session_id string) (*model.Room, error) {
+	uc.RoomManager.Mu.Lock()
+	defer uc.RoomManager.Mu.Unlock()
+
+	room, exists := uc.RoomManager.Rooms[roomID]
+	if !exists {
+		return nil, errors.New("room not found")
+	}
+	if room.OwnerSessionID != owner_session_id {
+		return nil, errors.New("you are not the owner of this room")
+	}
+
+	room.Name = newRoomSettings.Name
+	room.RequiresAuth = newRoomSettings.RequiresAuth
+	
+	
+	return room, nil
+}
