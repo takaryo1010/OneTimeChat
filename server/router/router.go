@@ -26,7 +26,7 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 	e.POST("/room/:id", mc.JoinRoom)
 	// e.GET("/room/:id/participants", mc.GetParticipants)
 	// e.PATCH("/room/:id/settings", mc.UpdateRoomSettings)
-	// e.POST("/room/:id/auth", mc.Authenticate)
+	e.POST("/room/:id/auth", mc.Authenticate)
 	// e.DELETE("/room/:id", mc.DeleteRoom)
 	// e.DELETE("/room/:id/kick/:participant_id", mc.KickParticipant)
 

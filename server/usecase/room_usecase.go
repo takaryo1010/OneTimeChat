@@ -34,9 +34,19 @@ func NewRoomUsecase() *RoomUsecase {
 }
 
 // CreateRoom 新しい部屋を作る
-func (uc *RoomUsecase) CreateRoom(room *model.Room, generatedSessionID string) (*model.Room, error) {
+func (uc *RoomUsecase) CreateRoom(room *model.Room) (*model.Room, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
+
+	// セッションIDの生成
+	sessionID, err := GenerateSessionID()
+	if err != nil {
+		return nil, err
+	}
+
+	
+
+
 
 	roomID := generateRoomID(uc.RoomManager) // 任意のID生成関数を使用
 	room = &model.Room{
@@ -44,7 +54,8 @@ func (uc *RoomUsecase) CreateRoom(room *model.Room, generatedSessionID string) (
 		Name:                   room.Name,
 		Owner:                  room.Owner,
 		Expires:                room.Expires,
-		RequiresAuth:           true,//TODO
+		RequiresAuth:           room.RequiresAuth,
+		OwnerSessionID:         sessionID,
 		UnauthenticatedClients: []*model.Client{},
 		AuthenticatedClients:   []*model.Client{}, // 初期化
 		Mu:                     sync.Mutex{},
@@ -57,7 +68,7 @@ func (uc *RoomUsecase) CreateRoom(room *model.Room, generatedSessionID string) (
 	// オーナーを部屋に追加
 	client := &model.Client{
 		Name: room.Owner,
-		SessionID: generatedSessionID,
+		SessionID: sessionID,
 		Ws: nil,
 	}
 
@@ -239,3 +250,29 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender,se
 	}
 }
 
+func (uc *RoomUsecase) Authenticate(roomID, client_session_id,owner_session_id string)error{
+	uc.RoomManager.Mu.Lock()
+	room, exists := uc.RoomManager.Rooms[roomID]
+	uc.RoomManager.Mu.Unlock()
+
+	if !exists {
+		return errors.New("room not found")
+	}
+
+	if room.OwnerSessionID != owner_session_id {
+		return errors.New("you are not the owner of this room")
+	}
+
+	room.Mu.Lock()
+	defer room.Mu.Unlock()
+
+	for i, client := range room.UnauthenticatedClients {
+		if client.SessionID == client_session_id {
+			room.AuthenticatedClients = append(room.AuthenticatedClients, client)
+			room.UnauthenticatedClients = append(room.UnauthenticatedClients[:i], room.UnauthenticatedClients[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}

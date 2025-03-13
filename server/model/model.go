@@ -19,6 +19,7 @@ type Room struct {
 	ID                     string     `json:"ID"`// ルームID
 	Name                   string     `json:"name"`// ルーム名
 	Owner                  string     `json:"owner"`// ルームのオーナー
+	OwnerSessionID         string     `json:"ownerSessionID"`// オーナーのセッションID
 	Expires                time.Time  `json:"expires"`// 有効期限
 	RequiresAuth           bool       `json:"requiresAuth"`// 認証が必要かどうか
 	UnauthenticatedClients []*Client  // ルームへの接続許可待ちのクライアント

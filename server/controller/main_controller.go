@@ -28,35 +28,31 @@ func (mc *MainController) WebSocketHandler(c echo.Context) error {
 }
 
 func (mc *MainController) CreateRoom(c echo.Context) error {
-	// セッションIDの生成
-	sessionID, err := GenerateSessionID()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate session ID"})
-	}
-
-	// セッションIDをクッキーに保存
-	c.SetCookie(&http.Cookie{
-		Name:    "session_id",
-		Value:   sessionID,
-		Path:    "/",
-		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
-	})
-
+	
+	
 	// フォームからルーム名を取得
 	var req model.Room
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-
+	
 	roomName := req.Name
 	fmt.Println("Room name:", roomName)
 	owner := req.Owner
 	fmt.Println("Owner:", owner)
 	// ルーム作成処理
-	room, err := mc.RoomUsecase.CreateRoom(&req, sessionID)
+	room, err := mc.RoomUsecase.CreateRoom(&req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+
+	// セッションIDをクッキーに保存
+	c.SetCookie(&http.Cookie{
+		Name:    "session_id",
+		Value:   room.OwnerSessionID,
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
 
 	fmt.Println("Room created:", room.ID)
 	// ルーム作成成功時に返す
@@ -111,3 +107,16 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 }
 
 // Other handlers (GetParticipants, UpdateRoomSettings, etc.) can follow the same pattern.
+
+// Authenticate authenticates a client to join a room.
+func (mc *MainController) Authenticate(c echo.Context) error {
+	roomID := c.Param("id")
+	clientSessionID := c.QueryParam("client_session_id")
+	ownerSessionID := c.QueryParam("owner_session_id")
+	fmt.Println("Authentication requested for room:", roomID, "client session:", clientSessionID, "owner session:", ownerSessionID)
+	err := mc.RoomUsecase.Authenticate(roomID, clientSessionID, ownerSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return nil
+}

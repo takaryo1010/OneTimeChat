@@ -1,6 +1,11 @@
 package usecase
 
 import (
+	"fmt"
+	"time"
+
+	"crypto/sha256"
+	"encoding/hex"
 	"math/rand/v2"
 	"github.com/takaryo1010/OneTimeChat/server/model"
 )
@@ -47,3 +52,9 @@ func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room){
 }
 
 
+func GenerateSessionID() (string, error) {
+
+	data := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int())
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:]), nil
+}
