@@ -14,6 +14,11 @@ const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [sessionID, setSessionID] = useState<string>('');
   const [roomID, setRoomID] = useState<string>('');
+  const [expires, setExpires] = useState<string>(''); // expires を文字列として保存
+  const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
+  const [selectedTime, setSelectedTime] = useState<number>(0); // 時間
+  const [selectedMinutes, setSelectedMinutes] = useState<number>(0); // 分
+  const [selectedDays, setSelectedDays] = useState<number>(0); // 日数
 
   const getCookie = (name: string) => {
     const cookies = document.cookie.split('; ');
@@ -21,11 +26,32 @@ const App: React.FC = () => {
     return cookie ? cookie.split('=')[1] : null;
   };
 
+  const calculateExpiration = () => {
+    const currentDate = new Date();
+    if (selectedTime > 0) {
+      // 現在時刻から時間を追加
+      currentDate.setHours(currentDate.getHours() + selectedTime);
+    }
+    if (selectedMinutes > 0) {
+      // 現在時刻から分を追加
+      currentDate.setMinutes(currentDate.getMinutes() + selectedMinutes);
+    }
+    if (selectedDays > 0) {
+      // 現在時刻から日数を追加
+      currentDate.setDate(currentDate.getDate() + selectedDays);
+    }
+    return currentDate.toISOString(); // ISOフォーマットで返す
+  };
+
   const connectToRoom = async () => {
-    const baseUrl = `http://${window.location.hostname}:8080`; // 現在のホスト名でURLを動的に設定
+    const baseUrl = `http://${window.location.hostname}:8080`;
+
+    const expirationTime = calculateExpiration(); // 計算した期限を取得
+    setExpires(expirationTime); // expires を更新
+
     const response = await fetch(`${baseUrl}/room`, {
       method: 'POST',
-      body: JSON.stringify({ name: roomName, owner: clientName }),
+      body: JSON.stringify({ name: roomName, owner: clientName, expires: expirationTime, requiresAuth }),
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
     });
@@ -35,8 +61,8 @@ const App: React.FC = () => {
       console.log('Room creation response:', roomData);
       console.log(roomData.ID);
       const cookiesSessionID = getCookie('session_id');
-      setSessionID(cookiesSessionID); // セッションIDを保存
-      setRoomID(roomData.ID); // ルームIDを保存
+      setSessionID(cookiesSessionID);
+      setRoomID(roomData.ID);
 
       const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${cookiesSessionID}`);
       ws.onopen = () => {
@@ -59,7 +85,7 @@ const App: React.FC = () => {
   };
 
   const joinRoom = async () => {
-    const baseUrl = `http://${window.location.hostname}:8080`; // 現在のホスト名でURLを動的に設定
+    const baseUrl = `http://${window.location.hostname}:8080`;
     const response = await fetch(`${baseUrl}/room/${roomID}`, {
       method: 'POST',
       body: JSON.stringify({ client_name: clientName }),
@@ -67,12 +93,12 @@ const App: React.FC = () => {
       credentials: 'include',
     });
     const cookiesSessionID = getCookie('session_id');
-    setSessionID(cookiesSessionID); // セッションIDを保存
+    setSessionID(cookiesSessionID);
 
     if (response.ok) {
       const roomData = await response.json();
-      setSessionID(roomData.sessionID); // セッションIDを保存
-      setRoomID(roomData.roomID); // ルームIDを保存
+      setSessionID(roomData.sessionID);
+      setRoomID(roomData.roomID);
 
       const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.roomID}&client_name=${clientName}&session_id=${cookiesSessionID}`);
       ws.onopen = () => {
@@ -130,6 +156,42 @@ const App: React.FC = () => {
           onChange={(e) => setRoomID(e.target.value)}
         />
         <button onClick={joinRoom}>Join Room</button>
+      </div>
+
+      {/* expiresとAuth設定 */}
+      <div className="input-group">
+        {/* 時間のプルダウン */}
+        <select value={selectedTime} onChange={(e) => setSelectedTime(Number(e.target.value))}>
+          <option value={0}>Select Hours</option>
+          {[...Array(24)].map((_, index) => (
+            <option key={index} value={index}>{index} hour{index !== 1 ? 's' : ''}</option>
+          ))}
+        </select>
+
+        {/* 分のプルダウン */}
+        <select value={selectedMinutes} onChange={(e) => setSelectedMinutes(Number(e.target.value))}>
+          <option value={0}>Select Minutes</option>
+          {[...Array(60)].map((_, index) => (
+            <option key={index} value={index}>{index} minute{index !== 1 ? 's' : ''}</option>
+          ))}
+        </select>
+
+        {/* 日数のプルダウン */}
+        <select value={selectedDays} onChange={(e) => setSelectedDays(Number(e.target.value))}>
+          <option value={0}>Select Days</option>
+          {[...Array(31)].map((_, index) => (
+            <option key={index} value={index}>{index} day{index !== 1 ? 's' : ''}</option>
+          ))}
+        </select>
+
+        <label>
+          Requires Auth
+          <input
+            type="checkbox"
+            checked={requiresAuth}
+            onChange={(e) => setRequiresAuth(e.target.checked)}
+          />
+        </label>
       </div>
 
       {/* セッションID表示 */}
