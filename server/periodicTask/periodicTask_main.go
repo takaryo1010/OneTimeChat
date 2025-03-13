@@ -8,7 +8,7 @@ import (
 )
 
 func PeriodicTask(rm *model.RoomManager) {
-	ticker := time.NewTicker(5 *time.Minute) // 1分ごとに実行
+	ticker := time.NewTicker(5 *time.Minute) // 5分ごとに実行
 	defer ticker.Stop()
 
 	for range ticker.C {
