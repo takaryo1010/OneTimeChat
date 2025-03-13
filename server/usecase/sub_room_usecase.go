@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"math/rand/v2"
-
 	"github.com/takaryo1010/OneTimeChat/server/model"
 )
 
@@ -46,3 +45,5 @@ func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room){
 		rm.ExpireSortRooms = append(rm.ExpireSortRooms[:low], append([]*model.Room{room}, rm.ExpireSortRooms[low:]...)...)
 	}
 }
+
+

@@ -6,15 +6,22 @@ import (
 	"github.com/takaryo1010/OneTimeChat/server/controller"
 	"github.com/takaryo1010/OneTimeChat/server/router"
 	"github.com/takaryo1010/OneTimeChat/server/usecase"
+	"github.com/takaryo1010/OneTimeChat/server/periodicTask"
 )
 
 func main() {
+
+
+	
 	// Usecase と Controller の初期化
 	roomUsecase := usecase.NewRoomUsecase()
 	mainController := &controller.MainController{
 		RoomUsecase: roomUsecase,
 	}
-
+	
+	// 定期タスクの開始
+	go periodicTask.PeriodicTask(roomUsecase.RoomManager)
+	
 	// ルーターの設定
 	e := router.NewRouter(mainController)
 
