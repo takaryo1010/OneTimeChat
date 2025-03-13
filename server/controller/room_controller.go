@@ -105,3 +105,22 @@ func (mc *MainController) Authenticate(c echo.Context) error {
 	}
 	return nil
 }
+
+// 参加者を取得(notオーナー用つまり参加者がほかの参加者を確認する用)
+func (mc *MainController) GetParticipants(c echo.Context) error {
+	roomID := c.Param("id")
+	room, err := mc.RoomUsecase.GetRoomByID(roomID)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+	type Participant struct {
+		Name string `json:"name"`
+	}
+	participants := make([]Participant, 0)
+	for _, client := range room.AuthenticatedClients {
+		participants = append(participants, Participant{Name: client.Name})
+	}
+
+
+	return c.JSON(http.StatusOK, participants)
+}
