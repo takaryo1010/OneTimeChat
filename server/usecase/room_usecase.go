@@ -90,13 +90,19 @@ func (uc *RoomUsecase) GetRoomByID(roomID string) (*model.Room, error) {
 }
 
 // JoinRoom allows a client to join a room.
-func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) error {
+func (uc *RoomUsecase) JoinRoom(roomID, clientName string)(string, error) {
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
 	
 	if !exists {
-		return errors.New("room not found")
+		return "", errors.New("room not found")
+	}
+
+	// セッションIDの生成
+	generatedSessionID, err := GenerateSessionID()
+	if err != nil {
+		return "", err
 	}
 	
 	client := &model.Client{
@@ -104,6 +110,8 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 		SessionID: generatedSessionID,
 		Ws: nil,
 	}
+
+
 	
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
@@ -119,7 +127,7 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 		fmt.Println("SessionID: ", client.SessionID)
 		}
 	fmt.Println("----------------------")
-	return nil
+	return generatedSessionID, nil
 
 }
 

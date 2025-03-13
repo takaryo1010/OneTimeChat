@@ -82,7 +82,13 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	clientName := req.ClientName
 	fmt.Println("Client name:", clientName)
 
-	sessionID, err := GenerateSessionID()
+	
+	
+	sessionID,err := mc.RoomUsecase.JoinRoom(roomID, clientName)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	
 	// セッションIDをクッキーに保存
 	c.SetCookie(&http.Cookie{
 		Name:    "session_id",
@@ -90,15 +96,6 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate session ID"})
-	}
-
-	err = mc.RoomUsecase.JoinRoom(roomID, clientName, sessionID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	}
-
 	// 部屋に参加したことを確認
 	fmt.Println("Client joined:", clientName)
 	fmt.Println("Room ID:", roomID, "Session ID:", sessionID)
