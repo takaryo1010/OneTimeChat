@@ -38,7 +38,7 @@ const App: React.FC = () => {
       setSessionID(cookiesSessionID); // セッションIDを保存
       setRoomID(roomData.ID); // ルームIDを保存
 
-      const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${sessionID}`);
+      const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${cookiesSessionID}`);
       ws.onopen = () => {
         console.log('WebSocket connected');
       };
@@ -64,14 +64,17 @@ const App: React.FC = () => {
       method: 'POST',
       body: JSON.stringify({ client_name: clientName }),
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
+    const cookiesSessionID = getCookie('session_id');
+    setSessionID(cookiesSessionID); // セッションIDを保存
 
     if (response.ok) {
       const roomData = await response.json();
       setSessionID(roomData.sessionID); // セッションIDを保存
       setRoomID(roomData.roomID); // ルームIDを保存
 
-      const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomID}&client_name=${clientName}&session_id=${sessionID}`);
+      const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.roomID}&client_name=${clientName}&session_id=${cookiesSessionID}`);
       ws.onopen = () => {
         console.log('WebSocket connected');
       };

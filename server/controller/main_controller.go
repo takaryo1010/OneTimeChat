@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/takaryo1010/OneTimeChat/server/usecase"
+	"github.com/takaryo1010/OneTimeChat/server/model"
 )
 
 type MainController struct {
@@ -17,8 +18,9 @@ type MainController struct {
 func (mc *MainController) WebSocketHandler(c echo.Context) error {
 	roomID := c.QueryParam("room_id")
 	clientName := c.QueryParam("client_name")
-	fmt.Println("WebSocket connection requested for room:", roomID, "client:", clientName)
-	err := mc.RoomUsecase.HandleWebSocketConnection(c.Response(), c.Request(), roomID, clientName)
+	sessionID := c.QueryParam("session_id")
+	fmt.Println("WebSocket connection requested for room:", roomID, "client:", clientName, "session:", sessionID)
+	err := mc.RoomUsecase.HandleWebSocketConnection(c.Response(), c.Request(), roomID, clientName, sessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
@@ -41,11 +43,7 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 	})
 
 	// フォームからルーム名を取得
-	type CreateRoomRequest struct {
-		Name  string `json:"name"`
-		Owner string `json:"owner"`
-	}
-	var req CreateRoomRequest
+	var req model.Room
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
@@ -55,7 +53,7 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 	owner := req.Owner
 	fmt.Println("Owner:", owner)
 	// ルーム作成処理
-	room, err := mc.RoomUsecase.CreateRoom(roomName, owner, sessionID)
+	room, err := mc.RoomUsecase.CreateRoom(&req, sessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
@@ -89,6 +87,13 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	fmt.Println("Client name:", clientName)
 
 	sessionID, err := GenerateSessionID()
+	// セッションIDをクッキーに保存
+	c.SetCookie(&http.Cookie{
+		Name:    "session_id",
+		Value:   sessionID,
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate session ID"})
 	}

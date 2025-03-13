@@ -34,17 +34,17 @@ func NewRoomUsecase() *RoomUsecase {
 }
 
 // CreateRoom 新しい部屋を作る
-func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*model.Room, error) {
+func (uc *RoomUsecase) CreateRoom(room *model.Room, generatedSessionID string) (*model.Room, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
 	roomID := generateRoomID(uc.RoomManager) // 任意のID生成関数を使用
-	room := &model.Room{
+	room = &model.Room{
 		ID:                     roomID,
-		Name:                   name,
-		Owner:                  owner,
-		Expires:                time.Now().Add(24 * time.Hour ), // 例: 24時間有効
-		RequiresAuth:           true,
+		Name:                   room.Name,
+		Owner:                  room.Owner,
+		Expires:                room.Expires,
+		RequiresAuth:           true,//TODO
 		UnauthenticatedClients: []*model.Client{},
 		AuthenticatedClients:   []*model.Client{}, // 初期化
 		Mu:                     sync.Mutex{},
@@ -56,7 +56,7 @@ func (uc *RoomUsecase) CreateRoom(name, owner, generatedSessionID string) (*mode
 
 	// オーナーを部屋に追加
 	client := &model.Client{
-		Name: owner,
+		Name: room.Owner,
 		SessionID: generatedSessionID,
 		Ws: nil,
 	}
@@ -113,7 +113,7 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 }
 
 // HandleWebSocketConnection handles a WebSocket connection for a client.
-func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.Request, roomID, clientName string) error {
+func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.Request, roomID, clientName,sessionID string) error {
 	// 部屋を取得
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
@@ -132,7 +132,10 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 	// 部屋内に既に存在する仮のクライアントを検索
 	var client *model.Client
 	for _, c := range room.AuthenticatedClients {
-		if c.Name == clientName {
+		fmt.Println("Name: ", c.Name)
+		fmt.Println("SessionID: ", c.SessionID)
+		fmt.Println("received SessionID: ", sessionID)
+		if c.SessionID == sessionID {
 			client = c
 			break
 		}
@@ -161,7 +164,7 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 				break
 			}
 			// 受信したメッセージを他のクライアントにブロードキャスト
-			uc.broadcastToRoom(roomID, msg,clientName)
+			uc.broadcastToRoom(roomID, msg,clientName,sessionID)
 		}
 	}()
 
@@ -169,7 +172,19 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 }
 
 // broadcastToRoom broadcasts a message with sender information, room ID, and timestamp.
-func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender string) {
+func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender,sessionID string) {
+
+	isClientInRoom := false
+	for _, c := range uc.RoomManager.Rooms[roomID].AuthenticatedClients {
+		if c.SessionID == sessionID {
+			isClientInRoom = true
+			break
+		}
+	}
+	if !isClientInRoom {
+		return
+	}
+
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
@@ -197,6 +212,9 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender st
 		// エンコードエラー時の処理
 		return
 	}
+	fmt.Println("Message sent:", string(messageJSON))
+	fmt.Println("Sender:", sender)
+	fmt.Println("SessionID:", sessionID)
 
 	// 各クライアントにJSONメッセージを送信
 	for _, client := range room.AuthenticatedClients {

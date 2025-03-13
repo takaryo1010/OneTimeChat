@@ -16,11 +16,11 @@ type RoomManager struct {
 
 // Room は個々のチャットルームを表す構造体
 type Room struct {
-	ID                     string     // ルームID
-	Name                   string     // ルーム名
-	Owner                  string     // ルームのオーナー
-	Expires                time.Time  // 有効期限
-	RequiresAuth           bool       // 認証が必要かどうか
+	ID                     string     `json:"ID"`// ルームID
+	Name                   string     `json:"name"`// ルーム名
+	Owner                  string     `json:"owner"`// ルームのオーナー
+	Expires                time.Time  `json:"expires"`// 有効期限
+	RequiresAuth           bool       `json:"requiresAuth"`// 認証が必要かどうか
 	UnauthenticatedClients []*Client  // ルームへの接続許可待ちのクライアント
 	AuthenticatedClients   []*Client  //ルームへの接続許可がされているクライアント
 	Mu                     sync.Mutex // スレッドセーフにするためのミューテックス
