@@ -15,6 +15,11 @@
     gap: 16px; /* flexboxのgapを追加して、全ての要素に隙間をつける */
 }
 
+.popup-input .MuiFormHelperText-root {
+    min-height: 20px; /* エラーメッセージの高さを固定 */
+}
+
+
 .close-button {
     display: flex;
     justify-content: flex-end;
@@ -36,6 +41,7 @@
     width: auto;
     max-width: 80px;
     margin: 8px 0; /* セレクトボックスの上下にマージン */
+    margin-bottom: 31px; /* セレクトボックスに下マージン */
 }
 
 .expiry-container {
@@ -50,3 +56,8 @@
     width: 100%;
     margin-top: 24px; /* ボタンの上に十分なマージン */
 }
+.tooltip-wrapper {
+    display: block; /* インライン要素の <span> をブロック要素にする */
+    width: 100%; /* 親要素（ボタン）の横幅に合わせる */
+}
+

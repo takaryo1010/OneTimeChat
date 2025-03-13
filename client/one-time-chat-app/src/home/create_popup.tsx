@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './css/create_popup.css';
-import { Box, Button, Typography, Modal, IconButton, TextField, Select, MenuItem, InputAdornment, SelectChangeEvent, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Button, Typography, Modal, IconButton, TextField, Select, MenuItem, InputAdornment, SelectChangeEvent, FormControlLabel, Checkbox,Tooltip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Icon from '@mdi/react';
 import { mdiHomePlus } from '@mdi/js';
@@ -13,6 +13,7 @@ const CreatePopup: React.FC = () => {
     const [userName, setUserName] = useState<string>(''); 
     const [requiresAuth, setRequiresAuth] = useState<boolean>(false); // チェックボックスの状態を管理
     const [error, setError] = useState<string>('');
+    const [errorSentence, setErrorSentence] = useState<string>('');
 
     const openPopup = () => setIsPopupVisible(true);
     const closePopup = () => {
@@ -61,8 +62,33 @@ const CreatePopup: React.FC = () => {
     };
 
     useEffect(() => {
+        if (timeUnits === '分　' && Number(expiry) > 60) {
+            setExpiry(String(60));
+        }
+        if (timeUnits === '時間' && Number(expiry) > 24) {
+            setExpiry(String(24));
+        }
+        if (timeUnits === '日　' && Number(expiry) > 5) {
+            setExpiry(String(5));
+        }
         setError(validateExpiry(expiry));
     }, [timeUnits, expiry]);
+
+    useEffect(() => {
+        let messages: string[] = [];
+        if (roomName === "") {
+            messages.push("ルーム名を入力してください");
+        }
+        if (userName === "") {
+            messages.push("ユーザー名を入力してください");
+        }
+        if (error) {
+            messages.push("期限フィールドには"+error);
+        }
+        setErrorSentence(messages.join("\n"));
+    }, [error, roomName, userName]);
+    
+
 
     return (
         <div>
@@ -109,22 +135,25 @@ const CreatePopup: React.FC = () => {
                     />
 
                     <Box className="expiry-container">
-                        <TextField
-                            className="popup-input"
-                            label="期限"
-                            variant="outlined"
-                            type="number"
-                            value={expiry}
-                            onChange={handleExpiryChange}
-                            error={!!error}
-                            helperText={error}
-                            InputProps={{
-                                endAdornment: <InputAdornment position="end">{timeUnits}</InputAdornment>,
-                            }}
-                            inputProps={{
-                                min: 1,
-                            }}
-                        />
+                    <TextField
+                        className="popup-input"
+                        label="期限"
+                        variant="outlined"
+                        type="number"
+                        value={expiry}
+                        onChange={handleExpiryChange}
+                        error={!!error}
+                        helperText={error || " "} 
+                        InputProps={{
+                            endAdornment: <InputAdornment position="end">{timeUnits}</InputAdornment>,
+                        }}
+                        inputProps={{
+                            min: 1,
+                            max: timeUnits === '分　' ? 60 : timeUnits === '時間' ? 24 : 5,
+                            style: { textAlign: "right" },
+                        }}
+                    />
+
 
                         <Select
                             className="popup-select"
@@ -132,9 +161,9 @@ const CreatePopup: React.FC = () => {
                             onChange={handleUnitChange}
                             displayEmpty
                         >
-                            <MenuItem value="分">分　</MenuItem>
+                            <MenuItem value="分　">分　</MenuItem>
                             <MenuItem value="時間">時間</MenuItem>
-                            <MenuItem value="日">日　</MenuItem>
+                            <MenuItem value="日　">日　</MenuItem>
                         </Select>
                     </Box>
 
@@ -149,16 +178,35 @@ const CreatePopup: React.FC = () => {
                         label="チェックすると入室許可が必要になります"
                     />
 
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        endIcon={<Icon path={mdiHomePlus} size={1} />}
-                        onClick={closePopup}
-                        className="popup-button"
-                        disabled={!!error || !expiry || !roomName || !userName} // エラーや未入力時は無効化
+                    <Tooltip
+                        title={
+                            !!errorSentence ? (
+                                <Typography component="span">
+                                    {errorSentence.split("\n").map((line, index) => (
+                                        <React.Fragment key={index}>
+                                            {line}
+                                            <br />
+                                        </React.Fragment>
+                                    ))}
+                                </Typography>
+                            ) : ""
+                        }
+                        arrow
                     >
-                        ルームを作成
-                    </Button>
+                        <span className="tooltip-wrapper">
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                endIcon={<Icon path={mdiHomePlus} size={1} />}
+                                onClick={closePopup}
+                                className="popup-button"
+                                disabled={!!error || !expiry || !roomName || !userName} // エラーや未入力時は無効化
+                            >
+                                ルームを作成
+                            </Button>
+                        </span>
+                    </Tooltip>
+
                 </Box>
             </Modal>
         </div>
