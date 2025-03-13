@@ -97,9 +97,9 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName,generatedSessionID string) er
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 	if room.RequiresAuth {
-		room.AuthenticatedClients = append(room.AuthenticatedClients, client)
-	} else {
 		room.UnauthenticatedClients = append(room.UnauthenticatedClients, client)
+		} else {
+		room.AuthenticatedClients = append(room.AuthenticatedClients, client)
 	}
 		
 	fmt.Println("Authenticated Clients")
@@ -140,6 +140,20 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 			break
 		}
 	}
+	if client == nil {
+		for _, c := range room.UnauthenticatedClients {
+			fmt.Println("Name: ", c.Name)
+			fmt.Println("SessionID: ", c.SessionID)
+			fmt.Println("received SessionID: ", sessionID)
+			if c.SessionID == sessionID {
+				fmt.Println("This client is unauthenticated")
+				client = c
+				break
+			}
+
+		}
+	}
+
 
 	if client == nil {
 		// 仮のクライアントが見つからない場合はエラーを返す
