@@ -1,0 +1,51 @@
+.popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px; /* flexboxのgapを追加して、全ての要素に隙間をつける */
+}
+
+.close-button {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-bottom: 16px; /* close-buttonに下マージン */
+}
+
+.popup-title {
+    margin-bottom: 24px; /* タイトルに下マージン */
+    text-align: center;
+}
+
+.popup-input {
+    width: 100%;
+    margin-bottom: 16px; /* 入力フィールドに下マージンを追加 */
+}
+
+.popup-select {
+    width: auto;
+    max-width: 80px;
+    margin: 8px 0; /* セレクトボックスの上下にマージン */
+}
+
+.expiry-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px; /* 期限部分に下マージン */
+}
+
+.popup-button {
+    width: 100%;
+    margin-top: 24px; /* ボタンの上に十分なマージン */
+}

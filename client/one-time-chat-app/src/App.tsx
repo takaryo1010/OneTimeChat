@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
 import Debug from './debug.tsx';
 import Home from './home/home_main.tsx'
 import Chat from './chat/chat_main.tsx'
+import './App.css';
 
 const App: React.FC = () => {
   return (

@@ -1,9 +1,18 @@
 import React from 'react';
-
+import CreatePopup from './create_popup.tsx';
+import './css/home.css';
 const Home: React.FC = () => {
+
+
+    
+
     return (
-        <div>
-        <h1>Home Page</h1>
+        <div className='home'>
+        <h1>ようこそOneTimeChatへ!</h1>
+        <p>OneTimeChatは、使い捨てのチャットルームを提供します。</p>
+
+        <CreatePopup />
+        
         </div>
     );
     }

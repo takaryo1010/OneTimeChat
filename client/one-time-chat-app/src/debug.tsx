@@ -11,9 +11,10 @@ const Debug: React.FC = () => {
   const [roomName, setRoomName] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  // const [socket, setSocket] = useState<Socket | null>(null);
   const [sessionID, setSessionID] = useState<string>('');
   const [roomID, setRoomID] = useState<string>('');
+  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
   const [expires, setExpires] = useState<string>(''); // expires を文字列として保存
   const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
   const [selectedTime, setSelectedTime] = useState<number>(0); // 時間
@@ -61,7 +62,9 @@ const Debug: React.FC = () => {
       console.log('Room creation response:', roomData);
       console.log(roomData.ID);
       const cookiesSessionID = getCookie('session_id');
-      setSessionID(cookiesSessionID);
+      if (cookiesSessionID) {
+        setSessionID(cookiesSessionID || '');
+      }
       setRoomID(roomData.ID);
 
       const ws = new WebSocket(`ws://${window.location.hostname}:8080/ws?room_id=${roomData.ID}&client_name=${clientName}&session_id=${cookiesSessionID}`);
@@ -77,8 +80,8 @@ const Debug: React.FC = () => {
       ws.onclose = () => {
         console.log('WebSocket disconnected');
       };
-
-      setSocket(ws);
+      setWebSocket(ws);
+      // setSocket(ws);
     } else {
       alert('Room creation failed');
     }
@@ -93,7 +96,7 @@ const Debug: React.FC = () => {
       credentials: 'include',
     });
     const cookiesSessionID = getCookie('session_id');
-    setSessionID(cookiesSessionID);
+    setSessionID(cookiesSessionID || '');
 
     if (response.ok) {
       const roomData = await response.json();
@@ -114,15 +117,15 @@ const Debug: React.FC = () => {
         console.log('WebSocket disconnected');
       };
 
-      setSocket(ws);
+      setWebSocket(ws);
     } else {
       alert('Failed to join the room');
     }
   };
 
   const sendMessage = (message: string) => {
-    if (socket) {
-      socket.send(message);
+    if (webSocket) {
+      webSocket.send(message);
     }
   };
 
