@@ -134,13 +134,12 @@ func (mc *MainController) UpdateRoomSettings(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	fmt.Println(req)
 	roomName := req.Name
 	fmt.Println("Room name:", roomName)
 	owner := req.Owner
 	fmt.Println("Owner:", owner)
 	// ルーム作成処理
-	room, err := mc.RoomUsecase.UpdateRoomSettings(roomID, req, ownerSessionID)
+	room, err := mc.RoomUsecase.UpdateRoomSettings(roomID, &req, ownerSessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

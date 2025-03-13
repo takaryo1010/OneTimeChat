@@ -155,7 +155,7 @@ func (uc *RoomUsecase) Authenticate(roomID, client_session_id, owner_session_id 
 	return nil
 }
 
-func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings model.Room,owner_session_id string) (*model.Room, error) {
+func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings *model.Room,owner_session_id string) (*model.Room, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
