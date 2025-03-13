@@ -27,7 +27,7 @@ func deleteExpireSortRooms( rm *model.RoomManager){
 		if room.Expires.Before(time.Now()) {
 			rm.ExpireSortRooms = append(rm.ExpireSortRooms[:i], rm.ExpireSortRooms[i+1:]...)
 			delete(rm.Rooms, room.ID)
-			fmt.Println("Delete room:", room.ID)
+			fmt.Println("Delete room:", room.ID,"by PeriodicTask")
 		}else if(room.Expires.After(time.Now())){
 			break
 		}

@@ -26,9 +26,8 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 	}
 	
 	roomName := req.Name
-	fmt.Println("Room name:", roomName)
 	owner := req.Owner
-	fmt.Println("Owner:", owner)
+	fmt.Println("Room name:", roomName,"by",owner)
 	// ルーム作成処理
 	room, err := mc.RoomUsecase.CreateRoom(&req)
 	if err != nil {
@@ -69,7 +68,6 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 	clientName := req.ClientName
-	fmt.Println("Client name:", clientName)
 
 	
 	
@@ -86,8 +84,7 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	// 部屋に参加したことを確認
-	fmt.Println("Client joined:", clientName)
-	fmt.Println("Room ID:", roomID, "Session ID:", sessionID)
+	fmt.Println("Client joined:", clientName,"in room:", roomID)
 
 	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID, "sessionID": sessionID})
 }
@@ -98,11 +95,11 @@ func (mc *MainController) Authenticate(c echo.Context) error {
 	roomID := c.Param("id")
 	clientSessionID := c.QueryParam("client_session_id")
 	ownerSessionID := c.QueryParam("owner_session_id")
-	fmt.Println("Authentication requested for room:", roomID, "client session:", clientSessionID, "owner session:", ownerSessionID)
 	err := mc.RoomUsecase.Authenticate(roomID, clientSessionID, ownerSessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	fmt.Println("Client authenticated:", clientSessionID, "in room:", roomID)
 	return nil
 }
 
@@ -134,15 +131,12 @@ func (mc *MainController) UpdateRoomSettings(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	roomName := req.Name
-	fmt.Println("Room name:", roomName)
-	owner := req.Owner
-	fmt.Println("Owner:", owner)
 	// ルーム作成処理
 	room, err := mc.RoomUsecase.UpdateRoomSettings(roomID, &req, ownerSessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	fmt.Println("Room updated:", room.ID)
 	return c.JSON(http.StatusOK, room)
 }
 

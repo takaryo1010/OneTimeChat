@@ -31,9 +31,7 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 	// 部屋内に既に存在する仮のクライアントを検索
 	var client *model.Client
 	for _, c := range room.AuthenticatedClients {
-		fmt.Println("Name: ", c.Name)
-		fmt.Println("SessionID: ", c.SessionID)
-		fmt.Println("received SessionID: ", sessionID)
+
 		if c.SessionID == sessionID {
 			client = c
 			break
@@ -41,11 +39,8 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 	}
 	if client == nil {
 		for _, c := range room.UnauthenticatedClients {
-			fmt.Println("Name: ", c.Name)
-			fmt.Println("SessionID: ", c.SessionID)
-			fmt.Println("received SessionID: ", sessionID)
+
 			if c.SessionID == sessionID {
-				fmt.Println("This client is unauthenticated")
 				client = c
 				break
 			}
@@ -124,9 +119,7 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 		// エンコードエラー時の処理
 		return
 	}
-	fmt.Println("Message sent:", string(messageJSON))
-	fmt.Println("Sender:", sender)
-	fmt.Println("SessionID:", sessionID)
+
 
 	// 各クライアントにJSONメッセージを送信
 	for _, client := range room.AuthenticatedClients {

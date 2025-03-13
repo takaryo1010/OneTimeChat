@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -21,7 +20,6 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 
 	// WebSocketエンドポイント
 	e.GET("/ws", mc.WebSocketHandler, func(next echo.HandlerFunc) echo.HandlerFunc {
-		fmt.Println("WebSocket connection requested")
 		return next
 	})
 

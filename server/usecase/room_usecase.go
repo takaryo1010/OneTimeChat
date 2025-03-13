@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -111,12 +110,6 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName string) (string, error) {
 		room.AuthenticatedClients = append(room.AuthenticatedClients, client)
 	}
 
-	fmt.Println("Authenticated Clients")
-	for _, client := range room.AuthenticatedClients {
-		fmt.Println("Name: ", client.Name)
-		fmt.Println("SessionID: ", client.SessionID)
-	}
-	fmt.Println("----------------------")
 	return generatedSessionID, nil
 
 }
