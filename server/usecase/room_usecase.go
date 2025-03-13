@@ -266,12 +266,19 @@ func (uc *RoomUsecase) Authenticate(roomID, client_session_id,owner_session_id s
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 
+	isClientInRoom := false
+
 	for i, client := range room.UnauthenticatedClients {
 		if client.SessionID == client_session_id {
 			room.AuthenticatedClients = append(room.AuthenticatedClients, client)
 			room.UnauthenticatedClients = append(room.UnauthenticatedClients[:i], room.UnauthenticatedClients[i+1:]...)
+			isClientInRoom = true
 			break
 		}
+	}
+
+	if !isClientInRoom {
+		return errors.New("client not found in the room")
 	}
 
 	return nil
