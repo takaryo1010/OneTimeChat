@@ -182,3 +182,42 @@ func (uc *RoomUsecase) DeleteRoom(roomID, owner_session_id string) error {
 	delete(uc.RoomManager.Rooms, roomID)
 	return nil
 }
+
+func (uc *RoomUsecase) KickParticipant(roomID, client_session_id, owner_session_id string) error {
+	uc.RoomManager.Mu.Lock()
+	defer uc.RoomManager.Mu.Unlock()
+
+	room, exists := uc.RoomManager.Rooms[roomID]
+	if !exists {
+		return errors.New("room not found")
+	}
+	if room.OwnerSessionID != owner_session_id {
+		return errors.New("you are not the owner of this room")
+	}
+
+	room.Mu.Lock()
+	defer room.Mu.Unlock()
+
+	if owner_session_id == client_session_id {
+		return errors.New("you can't kick yourself")
+	}
+
+	if client_session_id == "" {
+		return errors.New("client_session_id is required")
+	}
+
+	isClientInRoom := false
+	for i, client := range room.AuthenticatedClients {
+		if client.SessionID == client_session_id {
+			room.AuthenticatedClients = append(room.AuthenticatedClients[:i], room.AuthenticatedClients[i+1:]...)
+			isClientInRoom = true
+			break
+		}
+	}
+
+	if !isClientInRoom {
+		return errors.New("client not found in the room")
+	}
+
+	return nil
+}

@@ -151,3 +151,25 @@ func (mc *MainController) DeleteRoom(c echo.Context) error {
 	fmt.Println("Room deleted:", roomID)
 	return c.JSON(http.StatusOK, map[string]string{"message": "room deleted"})
 }
+// 参加者をキック(オーナー専用)
+func (mc *MainController) KickParticipant(c echo.Context) error {
+	roomID := c.Param("id")
+	ownerSessionID := c.QueryParam("owner_session_id")
+	clientSessionID := c.QueryParam("client_session_id")
+	
+	if ownerSessionID == clientSessionID {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "you can't kick yourself"})
+	}
+
+	if clientSessionID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "client_session_id is required"})
+	}
+
+	
+	err := mc.RoomUsecase.KickParticipant(roomID, clientSessionID, ownerSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	fmt.Println("Client kicked:", clientSessionID, "in room:", roomID)
+	return c.JSON(http.StatusOK, map[string]string{"message": "client kicked"})
+}
