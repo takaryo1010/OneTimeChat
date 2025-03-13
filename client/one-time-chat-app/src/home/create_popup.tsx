@@ -94,7 +94,7 @@ const CreatePopup: React.FC = () => {
 
                     <TextField
                         className="popup-input"
-                        label="ルーム名"
+                        label="ルーム名 (必須)"
                         variant="outlined"
                         value={roomName}
                         onChange={handleRoomNameChange}
@@ -102,7 +102,7 @@ const CreatePopup: React.FC = () => {
 
                     <TextField
                         className="popup-input"
-                        label="ユーザー名"
+                        label="ユーザー名 (必須)"
                         variant="outlined"
                         value={userName}
                         onChange={handleUserNameChange}
