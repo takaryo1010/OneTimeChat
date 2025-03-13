@@ -9,7 +9,7 @@ const Home: React.FC = () => {
     return (
         <div className='home'>
         <h1>ようこそOneTimeChatへ!</h1>
-        <p>OneTimeChatは、使い捨てのチャットルームを提供します。</p>
+        <p>本サービスは使い捨てのチャットルームを提供します</p>
 
         <CreatePopup />
         
