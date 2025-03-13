@@ -14,18 +14,7 @@ type MainController struct {
 	RoomUsecase *usecase.RoomUsecase
 }
 
-// WebSocketHandler handles WebSocket connections.
-func (mc *MainController) WebSocketHandler(c echo.Context) error {
-	roomID := c.QueryParam("room_id")
-	clientName := c.QueryParam("client_name")
-	sessionID := c.QueryParam("session_id")
-	fmt.Println("WebSocket connection requested for room:", roomID, "client:", clientName, "session:", sessionID)
-	err := mc.RoomUsecase.HandleWebSocketConnection(c.Response(), c.Request(), roomID, clientName, sessionID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	}
-	return nil
-}
+
 
 func (mc *MainController) CreateRoom(c echo.Context) error {
 	
@@ -103,7 +92,6 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID, "sessionID": sessionID})
 }
 
-// Other handlers (GetParticipants, UpdateRoomSettings, etc.) can follow the same pattern.
 
 // Authenticate authenticates a client to join a room.
 func (mc *MainController) Authenticate(c echo.Context) error {
