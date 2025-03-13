@@ -10,14 +10,22 @@ RUN apt-get update && apt-get install -y \
     git \
     language-pack-ja \
     locales \
+    openssh-server \
     && apt-get clean
 
 # bashの日本語化
 RUN locale-gen
-
 RUN export LC_ALL=ja_JP.utf8
-
 ENV LANG=ja_JP.UTF-8
+
+# SSHの設定
+RUN mkdir /var/run/sshd && \
+    echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+
+# 環境変数から root のパスワードを設定
+ARG ROOT_PASSWORD
+RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 
 # NodeSourceのリポジトリを追加して最新のNode.jsをインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
@@ -38,11 +46,18 @@ ENV PATH="${GOPATH}/bin:${PATH}"
 # Goのリンターをインストール
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${GOPATH}/bin v1.64.7
 RUN go install golang.org/x/tools/cmd/goimports@latest
+
 # 作業ディレクトリを作成
 WORKDIR /workspace
+
+# SSH ログイン時に /workspace に移動するように設定
+RUN echo 'cd /workspace' >> /root/.bashrc
 
 # リポジトリをクローン
 RUN git clone https://github.com/takaryo1010/OneTimeChat.git .
 
 # ポートの設定
-EXPOSE 3000 8080
+EXPOSE 22 3000 8080
+
+# SSH デーモンを起動
+CMD ["/usr/sbin/sshd", "-D"]
