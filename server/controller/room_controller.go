@@ -145,3 +145,15 @@ func (mc *MainController) UpdateRoomSettings(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, room)
 }
+
+// ルームの削除(オーナー専用)
+func (mc *MainController) DeleteRoom(c echo.Context) error {
+	roomID := c.Param("id")
+	ownerSessionID := c.QueryParam("owner_session_id")
+	err := mc.RoomUsecase.DeleteRoom(roomID, ownerSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	fmt.Println("Room deleted:", roomID)
+	return c.JSON(http.StatusOK, map[string]string{"message": "room deleted"})
+}

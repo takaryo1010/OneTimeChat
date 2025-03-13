@@ -32,10 +32,10 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 	roomGroup.POST("/:id", mc.JoinRoom)
 	roomGroup.POST("/:id/auth", mc.Authenticate)
 
-	// 将来的に有効化するかもしれないエンドポイント
 	roomGroup.GET("/:id/participants", mc.GetParticipants)
 	roomGroup.PATCH("/:id/settings", mc.UpdateRoomSettings)
-	// roomGroup.DELETE("/:id", mc.DeleteRoom)
+	roomGroup.DELETE("/:id", mc.DeleteRoom)
+	// 将来的に有効化するかもしれないエンドポイント
 	// roomGroup.DELETE("/:id/kick/:participant_id", mc.KickParticipant)
 
 	return e

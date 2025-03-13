@@ -173,3 +173,19 @@ func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings *model.
 	
 	return room, nil
 }
+
+func (uc *RoomUsecase) DeleteRoom(roomID, owner_session_id string) error {
+	uc.RoomManager.Mu.Lock()
+	defer uc.RoomManager.Mu.Unlock()
+
+	room, exists := uc.RoomManager.Rooms[roomID]
+	if !exists {
+		return errors.New("room not found")
+	}
+	if room.OwnerSessionID != owner_session_id {
+		return errors.New("you are not the owner of this room")
+	}
+
+	delete(uc.RoomManager.Rooms, roomID)
+	return nil
+}
