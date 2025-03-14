@@ -12,7 +12,7 @@ import (
 
 func generateRoomID(rm *model.RoomManager) string {
 	//合計5文字、アルファベット大文字と数字のランダムな文字列を生成
-	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const chars = "ABCDEFGHJKLMNPQRSTUVWXY0123456789"
 	for {
 		roomID := ""
 		for i := 0; i < 5; i++ {
