@@ -11,7 +11,7 @@ const CreatePopup: React.FC = () => {
     const [expiry, setExpiry] = useState<string>('1');
     const [roomName, setRoomName] = useState<string>(''); 
     const [userName, setUserName] = useState<string>(''); 
-    const [requiresAuth, setRequiresAuth] = useState<boolean>(false); // チェックボックスの状態を管理
+    const [requiresAuth, setRequiresAuth] = useState<boolean>(false); 
     const [error, setError] = useState<string>('');
     const [errorSentence, setErrorSentence] = useState<string>('');
 
@@ -92,13 +92,9 @@ const CreatePopup: React.FC = () => {
 
     return (
         <div>
-            <Button
-                variant="contained"
-                color="primary"
-                endIcon={<Icon path={mdiHomePlus} size={1} />}
-                onClick={openPopup}
-            >
-                ルームを作成
+            <Button className="home-button" onClick={openPopup}>
+                                <Icon path={mdiHomePlus} size={2} />
+                                <Typography variant="h6">ルーム作成</Typography>
             </Button>
 
             <Modal

@@ -7,3 +7,39 @@
     gap: 16px;
     background-color: #f5f5f5;
 }
+
+.home {
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* ボタンを横並びに配置 */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* ボタン間のスペース */
+    margin-top: 30px;
+}
+
+/* 正方形の大きなボタン */
+.home-button {
+    width: 150px; /* 幅 */
+    height: 150px; /* 高さ（幅と同じで正方形） */
+    display: flex;
+    flex-direction: column; /* アイコンとテキストを縦並び */
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    border-radius: 12px; /* 角を少し丸める */
+    background-color: #1976d2; /* MUI のデフォルトの青色 */
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* ホバー時のエフェクト */
+.home-button:hover {
+    background-color: #1565c0;
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
