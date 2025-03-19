@@ -97,7 +97,9 @@ const Chat: React.FC = () => {
             }
             setIsAuthenticated(true);
             setRoomInfo(roomData);
-            connectToRoom(roomID);
+            if (roomID){
+                connectToRoom(roomID);
+            }
         } else if (roomID) {
             const sessionID = getCookie('session_id');
             const URL = `${APIURL}/room/${roomID}/isAuth?client_session_id=${sessionID}`;
