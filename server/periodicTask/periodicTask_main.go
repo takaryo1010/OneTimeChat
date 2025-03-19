@@ -8,27 +8,27 @@ import (
 )
 
 func PeriodicTask(rm *model.RoomManager) {
-	ticker := time.NewTicker(5 *time.Minute) // 5分ごとに実行
+	ticker := time.NewTicker(5 * time.Minute) // 5分ごとに実行
 	defer ticker.Stop()
 
 	for range ticker.C {
-			// fmt.Println("定期タスク実行:", time.Now())
-			// 期限切れのルームを削除
-			deleteExpireSortRooms( rm)
-			// ここでDB更新やログ処理などを行う
-		
+		// fmt.Println("定期タスク実行:", time.Now())
+		// 期限切れのルームを削除
+		deleteExpireSortRooms(rm)
+		// ここでDB更新やログ処理などを行う
+
 	}
 }
 
-func deleteExpireSortRooms( rm *model.RoomManager){
+func deleteExpireSortRooms(rm *model.RoomManager) {
 	// 期限切れのルームを削除
 
 	for i, room := range rm.ExpireSortRooms {
 		if room.Expires.Before(time.Now()) {
 			rm.ExpireSortRooms = append(rm.ExpireSortRooms[:i], rm.ExpireSortRooms[i+1:]...)
 			delete(rm.Rooms, room.ID)
-			fmt.Println("Delete room:", room.ID,"by PeriodicTask")
-		}else if(room.Expires.After(time.Now())){
+			fmt.Println("Delete room:", room.ID, "by PeriodicTask")
+		} else if room.Expires.After(time.Now()) {
 			break
 		}
 	}

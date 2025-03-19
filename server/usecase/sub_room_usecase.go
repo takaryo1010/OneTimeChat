@@ -6,8 +6,8 @@ import (
 
 	"crypto/sha256"
 	"encoding/hex"
-	"math/rand/v2"
 	"github.com/takaryo1010/OneTimeChat/server/model"
+	"math/rand/v2"
 )
 
 func generateRoomID(rm *model.RoomManager) string {
@@ -25,8 +25,7 @@ func generateRoomID(rm *model.RoomManager) string {
 
 }
 
-
-func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room){
+func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room) {
 	// 二分探索で期限切れのルームを探し、適切な位置に挿入
 	// 期限切れのルームがない場合は、最後尾に追加
 	if len(rm.ExpireSortRooms) == 0 {
@@ -50,7 +49,6 @@ func appendExpireBinarySearch(rm *model.RoomManager, room *model.Room){
 		rm.ExpireSortRooms = append(rm.ExpireSortRooms[:low], append([]*model.Room{room}, rm.ExpireSortRooms[low:]...)...)
 	}
 }
-
 
 func GenerateSessionID() (string, error) {
 

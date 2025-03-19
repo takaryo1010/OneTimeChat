@@ -6,28 +6,25 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/takaryo1010/OneTimeChat/server/usecase"
 	"github.com/takaryo1010/OneTimeChat/server/model"
+	"github.com/takaryo1010/OneTimeChat/server/usecase"
 )
 
 type MainController struct {
 	RoomUsecase *usecase.RoomUsecase
 }
 
-
-
 func (mc *MainController) CreateRoom(c echo.Context) error {
-	
-	
+
 	// フォームからルーム名を取得
 	var req model.Room
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	
+
 	roomName := req.Name
 	owner := req.Owner
-	fmt.Println("Room name:", roomName,"by",owner)
+	fmt.Println("Room name:", roomName, "by", owner)
 	// ルーム作成処理
 	room, err := mc.RoomUsecase.CreateRoom(&req)
 	if err != nil {
@@ -48,23 +45,22 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	c.SetCookie(&http.Cookie{
-		Name:   "user_name",
-		Value:  owner,
-		Path:   "/",
+		Name:    "user_name",
+		Value:   owner,
+		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 
 	c.SetCookie(&http.Cookie{
-		Name:   "is_owner",
-		Value:  "true",
-		Path:   "/",
+		Name:    "is_owner",
+		Value:   "true",
+		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	fmt.Println("Room created:", room.ID)
 	// ルーム作成成功時に返す
 	return c.JSON(http.StatusOK, room)
 }
-
 
 // GetRoom retrieves a specific room by ID.
 func (mc *MainController) GetRoom(c echo.Context) error {
@@ -88,13 +84,11 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	}
 	clientName := req.ClientName
 
-	
-	
-	sessionID,err := mc.RoomUsecase.JoinRoom(roomID, clientName)
+	sessionID, err := mc.RoomUsecase.JoinRoom(roomID, clientName)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
+
 	// セッションIDをクッキーに保存
 	c.SetCookie(&http.Cookie{
 		Name:    "session_id",
@@ -109,23 +103,22 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	c.SetCookie(&http.Cookie{
-		Name:   "user_name",
-		Value:  clientName,
-		Path:   "/",
+		Name:    "user_name",
+		Value:   clientName,
+		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	c.SetCookie(&http.Cookie{
-		Name:   "is_owner",
-		Value:  "false",
-		Path:   "/",
+		Name:    "is_owner",
+		Value:   "false",
+		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	// 部屋に参加したことを確認
-	fmt.Println("Client joined:", clientName,"in room:", roomID)
+	fmt.Println("Client joined:", clientName, "in room:", roomID)
 
 	return c.JSON(http.StatusOK, map[string]string{"roomID": roomID, "sessionID": sessionID})
 }
-
 
 // Authenticate authenticates a client to join a room.
 func (mc *MainController) Authenticate(c echo.Context) error {
@@ -155,12 +148,11 @@ func (mc *MainController) GetParticipants(c echo.Context) error {
 		participants = append(participants, Participant{Name: client.Name})
 	}
 
-
 	return c.JSON(http.StatusOK, participants)
 }
 
 // ルームの設定変更(オーナー専用)
-//RoomNameとrequiresAuthをjsonで必ず受け取る
+// RoomNameとrequiresAuthをjsonで必ず受け取る
 func (mc *MainController) UpdateRoomSettings(c echo.Context) error {
 	roomID := c.Param("id")
 	ownerSessionID := c.QueryParam("owner_session_id")
@@ -188,12 +180,13 @@ func (mc *MainController) DeleteRoom(c echo.Context) error {
 	fmt.Println("Room deleted:", roomID)
 	return c.JSON(http.StatusOK, map[string]string{"message": "room deleted"})
 }
+
 // 参加者をキック(オーナー専用)
 func (mc *MainController) KickParticipant(c echo.Context) error {
 	roomID := c.Param("id")
 	ownerSessionID := c.QueryParam("owner_session_id")
 	clientSessionID := c.QueryParam("client_session_id")
-	
+
 	if ownerSessionID == clientSessionID {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "you can't kick yourself"})
 	}
@@ -202,7 +195,6 @@ func (mc *MainController) KickParticipant(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "client_session_id is required"})
 	}
 
-	
 	err := mc.RoomUsecase.KickParticipant(roomID, clientSessionID, ownerSessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})

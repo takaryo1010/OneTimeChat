@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-
 // WebSocketHandler handles WebSocket connections.
 func (mc *MainController) WebSocketHandler(c echo.Context) error {
 	roomID := c.QueryParam("room_id")

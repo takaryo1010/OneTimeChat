@@ -120,7 +120,6 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 		return
 	}
 
-
 	// 各クライアントにJSONメッセージを送信
 	for _, client := range room.AuthenticatedClients {
 		err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
