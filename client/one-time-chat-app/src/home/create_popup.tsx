@@ -61,6 +61,21 @@ const CreatePopup: React.FC = () => {
         setRequiresAuth(event.target.checked);
     };
 
+    const createRoom = () => {
+        console.log("ルーム名:", roomName);
+        console.log("ユーザー名:", userName);
+        console.log("期限:", expiry, timeUnits);
+        console.log("入室許可:", requiresAuth);
+
+        const APIURL = process.env.REACT_APP_API_URL;
+        const url = `${APIURL}/create-room`;
+        console.log("API URL:", url);
+
+
+        closePopup();
+
+    }
+
     useEffect(() => {
         if (timeUnits === '分　' && Number(expiry) > 60) {
             setExpiry(String(60));
@@ -194,7 +209,7 @@ const CreatePopup: React.FC = () => {
                                 variant="contained"
                                 color="primary"
                                 endIcon={<Icon path={mdiHomePlus} size={1} />}
-                                onClick={closePopup}
+                                onClick={createRoom}
                                 className="popup-button"
                                 disabled={!!error || !expiry || !roomName || !userName} // エラーや未入力時は無効化
                             >
