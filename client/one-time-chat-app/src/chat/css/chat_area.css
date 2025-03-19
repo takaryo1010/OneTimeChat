@@ -1,0 +1,106 @@
+.message-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  .expand-button {
+    margin-top: 5px;
+    background: none;
+    color: #6a6c6d;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+  }
+  
+  .expand-button:hover {
+    color: #6a6c6d;
+  }
+  
+  .message {
+    padding: 5px;
+    border-radius: 5px;
+    margin: 5px 0;
+  }
+  
+  .chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* コンテンツが領域を超えないようにする */
+  }
+  
+  .chat-messages {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-y: auto;
+  }
+  
+  .chat-messages::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  
+  .message {
+    position: relative;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    text-align: left;
+    max-width: 50%;
+  }
+  
+  .sender {
+    position: absolute;
+    top: -15px;
+    left: 10px;
+    font-weight: bold;
+    padding: 0 5px;
+    font-size: 14px;
+  }
+  
+  .message-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+  }
+  
+  .message-content {
+    margin-top: 20px;
+    word-wrap: break-word;
+  }
+  
+  .message-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    resize: none;
+    font-size: 16px;
+  }
+  
+  .send-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+  
+  .me {
+    background-color: #dcf8c6;
+    align-self: flex-start;
+  }
+  
+  .other {
+    background-color: #e8f5e9;
+    align-self: flex-end;
+    margin-left: auto;
+  }

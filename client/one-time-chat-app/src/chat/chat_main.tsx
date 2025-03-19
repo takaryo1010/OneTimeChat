@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Box, List, ListItem, ListItemText } from '@mui/material';
 import './css/chat_main.css';
+import ChatArea from './chat_area.tsx';
 
 
 const Chat: React.FC = () => {
@@ -166,19 +167,7 @@ const Chat: React.FC = () => {
                 <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
                 <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
             </div>
-            <div className="chat-area">
-                <div className="chat-messages">
-                    {message.map((m, index) => (
-                        <p key={index} className="message">
-                            <span className="sender">{m.sender}:</span> {m.content}
-                        </p>
-                    ))}
-                </div>
-                <div className="message-input-area">
-                    <input type="text" className="message-input" placeholder="メッセージを入力..." />
-                    <button className="send-button" onClick={() => sendMessage('Hello, World!')}>送信</button>
-                </div>
-            </div>
+            <ChatArea message={message} sendMessage={sendMessage} />
             <div className="requests-section">
                 <div className="requests-header">リクエスト</div>
                 <div className="request-item">Aさん <span className="approve-button">承認</span></div>
