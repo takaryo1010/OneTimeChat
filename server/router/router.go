@@ -34,6 +34,8 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 	roomGroup.PATCH("/:id/settings", mc.UpdateRoomSettings)
 	roomGroup.DELETE("/:id", mc.DeleteRoom)
 	roomGroup.DELETE("/:id/kick", mc.KickParticipant)
+	roomGroup.DELETE("/:id/leave", mc.LeaveRoom)
+	roomGroup.GET("/;id/isAuth", mc.IsAuth)
 
 	return e
 }

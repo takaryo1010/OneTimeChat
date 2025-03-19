@@ -210,3 +210,23 @@ func (mc *MainController) KickParticipant(c echo.Context) error {
 	fmt.Println("Client kicked:", clientSessionID, "in room:", roomID)
 	return c.JSON(http.StatusOK, map[string]string{"message": "client kicked"})
 }
+
+// ルームから退出
+func (mc *MainController) LeaveRoom(c echo.Context) error {
+	roomID := c.Param("id")
+	clientSessionID := c.QueryParam("client_session_id")
+	err := mc.RoomUsecase.LeaveRoom(roomID, clientSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	fmt.Println("Client left:", clientSessionID, "in room:", roomID)
+	return c.JSON(http.StatusOK, map[string]string{"message": "client left"})
+}
+
+// 認証状態を確認
+func (mc *MainController) IsAuth(c echo.Context) error {
+	roomID := c.Param("id")
+	clientSessionID := c.QueryParam("client_session_id")
+	isAuth := mc.RoomUsecase.IsAuth(roomID, clientSessionID)
+	return c.JSON(http.StatusOK, map[string]bool{"isAuth": isAuth})
+}

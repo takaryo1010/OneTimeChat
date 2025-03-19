@@ -9,20 +9,29 @@ import { mdiHomePlus, mdiLogin } from '@mdi/js';
 const Home: React.FC = () => {
     return (
         <div className="home">
-            <h1>ようこそ OneTimeChat へ!</h1>
-            <p>本サービスは使い捨てのチャットルームを提供します</p>
+            <Typography variant="h2" gutterBottom>
+                ようこそ OneTimeChat へ!
+            </Typography>
+            <Typography variant="body1" >
+                本サービスは使い捨てのチャットルームを提供します
+            </Typography>
 
             {/* ボタンを横並びに配置 */}
             <Box className="button-container">
-
-            {/* ルーム作成のポップアップ */}
-            <CreatePopup />
-
-            <JoinPopup/>
+                {/* ルーム作成のポップアップ */}
+                <CreatePopup />
+                <JoinPopup />
             </Box>
-            <p>もし部屋を抜けてしまって戻りたい場合は下のボタンをクリックしてください</p>
-            <Button className="sub-button" href="/chat">部屋に戻る</Button>
-            <p>(部屋を抜けた後にルーム作成や参加をしていると戻れない場合があります)</p>
+
+            <Typography variant="body2">
+                もし部屋を抜けてしまって戻りたい場合は下のボタンをクリックしてください
+            </Typography>
+            <Button className="sub-button" href="/chat">
+                部屋に戻る
+            </Button>
+            <Typography variant="body2" color="textSecondary">
+                (部屋を抜けた後にルーム作成や参加をしていると戻れない場合があります)
+            </Typography>
         </div>
     );
 }
