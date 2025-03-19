@@ -142,11 +142,16 @@ func (mc *MainController) GetParticipants(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 	}
 	type Participant struct {
-		Name string `json:"name"`
+		Name    string `json:"name"`
+		isOwner bool   `json:"isOwner"`
 	}
 	participants := make([]Participant, 0)
 	for _, client := range room.AuthenticatedClients {
-		participants = append(participants, Participant{Name: client.Name})
+		if client.SessionID == room.OwnerSessionID {
+			participants = append(participants, Participant{Name: client.Name, isOwner: true})
+		} else {
+			participants = append(participants, Participant{Name: client.Name, isOwner: false})
+		}
 	}
 
 	return c.JSON(http.StatusOK, participants)
