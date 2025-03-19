@@ -47,6 +47,19 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
+	c.SetCookie(&http.Cookie{
+		Name:   "user_name",
+		Value:  owner,
+		Path:   "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
+
+	c.SetCookie(&http.Cookie{
+		Name:   "is_owner",
+		Value:  "true",
+		Path:   "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
 	fmt.Println("Room created:", room.ID)
 	// ルーム作成成功時に返す
 	return c.JSON(http.StatusOK, room)
@@ -87,6 +100,18 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		Name:    "session_id",
 		Value:   sessionID,
 		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
+	c.SetCookie(&http.Cookie{
+		Name:    "room_id",
+		Value:   roomID, // ここにRoomIDを設定
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
+	c.SetCookie(&http.Cookie{
+		Name:   "user_name",
+		Value:  clientName,
+		Path:   "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
 	// 部屋に参加したことを確認
