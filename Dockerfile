@@ -36,16 +36,10 @@ RUN curl -LO https://golang.org/dl/go1.23.0.linux-amd64.tar.gz \
     && tar -C /usr/local -xvzf go1.23.0.linux-amd64.tar.gz \
     && rm go1.23.0.linux-amd64.tar.gz
 
-# Goの環境変数を設定
-ENV PATH="/usr/local/go/bin:${PATH}"
-
-# GOPATHの設定
-ENV GOPATH="/root/go"
-ENV PATH="${GOPATH}/bin:${PATH}"
-
-# Goのリンターをインストール
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${GOPATH}/bin v1.64.7
-RUN go install golang.org/x/tools/cmd/goimports@latest
+# Goの環境変数を.bashrcに追加
+RUN echo 'export PATH="/usr/local/go/bin:$PATH"' >> /root/.bashrc
+RUN echo 'export GOPATH="/root/go"' >> /root/.bashrc
+RUN echo 'export PATH="${GOPATH}/bin:$PATH"' >> /root/.bashrc
 
 # 作業ディレクトリを作成
 WORKDIR /workspace
@@ -60,4 +54,4 @@ RUN git clone https://github.com/takaryo1010/OneTimeChat.git .
 EXPOSE 22 3000 8080
 
 # SSH デーモンを起動
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/bin/bash", "-c", "source /root/.bashrc && /usr/sbin/sshd -D"]
