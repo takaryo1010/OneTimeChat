@@ -27,13 +27,13 @@ const CreatePopup: React.FC = () => {
         if (isNaN(numValue) || numValue <= 0) {
             return "1以上の数を入力してください";
         }
-        if (timeUnits === '分' && numValue > 60) {
+        if (timeUnits === '分　' && numValue > 60) {
             return "60分以内で入力してください";
         }
         if (timeUnits === '時間' && numValue > 24) {
             return "24時間以内で入力してください";
         }
-        if (timeUnits === '日' && numValue > 5) {
+        if (timeUnits === '日　' && numValue > 5) {
             return "5日以内で入力してください";
         }
         return "";
