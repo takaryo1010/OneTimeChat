@@ -21,6 +21,7 @@ const Chat: React.FC = () => {
 
     const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
     const [ws, setWs] = useState<any>(null);
+    const [isConnectedWS, setIsConnectedWS] = useState<boolean>(false);
     const [message, setMessage] = useState<{ sender: string; content: string }[]>([]);
 
     const getCookie = (name: string) => {
@@ -36,6 +37,7 @@ const Chat: React.FC = () => {
             const URL = `${APIURL}/ws?room_id=${roomID}&client_name=${clientName}&session_id=${cookiesSessionID}`;
             const ws = new WebSocket(URL);
             ws.onopen = () => {
+                setIsConnectedWS(true);
                 console.log('WebSocket connected');
             }
             ws.onmessage = (event) => {
@@ -43,9 +45,11 @@ const Chat: React.FC = () => {
                 setMessage((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence }]);
               };
             ws.onclose = () => {
+                setIsConnectedWS(false);
                 console.log('WebSocket closed');
             }
             ws.onerror = (error) => {
+                setIsConnectedWS(false);
                 console.error('WebSocket error:', error);
             }
             setWs(ws);
@@ -78,12 +82,14 @@ const Chat: React.FC = () => {
             });
 
             const roomData = await response.json();
+            if (roomData.ownerSessionID !== getCookie('session_id')) {
+                console.log('Owner session ID does not match');
+                alert("あなたはオーナーではありません。cookieは変更しないでください。")
+                return;
+            }
             setRoomInfo(roomData);
 
-        } else {
-            console.log('User is not the owner');
-        }
-
+        } 
         if (roomID) {
             connectToRoom(roomID);
         }else{
@@ -96,18 +102,22 @@ const Chat: React.FC = () => {
 
    
         
-    if (!roomInfo) {
+    if (!isConnectedWS) {
         return <div>Loading...</div>;
     }
 
     return (
         <div>
+            
             <h1>Chat Page</h1>
-            <p>Room ID: {roomInfo.ID}</p>
-            <p>Room Name: {roomInfo.name}</p>
-            <p>Owner: {roomInfo.owner}</p>
-            <p>Expires: {roomInfo.expires}</p>
-            {/* You can add more fields from roomInfo to display here */}
+            {roomInfo && (
+                <>
+                    <p>Room ID: {roomInfo.ID}</p>
+                    <p>Room Name: {roomInfo.name}</p>
+                    <p>Owner: {roomInfo.owner}</p>
+                    <p>Expires: {roomInfo.expires}</p>
+                </>
+            )}
             <button 
                 onClick={() => {
                     sendMessage('Hello, World!');
@@ -115,6 +125,14 @@ const Chat: React.FC = () => {
             >
                 Send Message
             </button>
+            <div>
+                {message.map((m, index) => (
+                    <p key={index}>
+                        {m.sender}: {m.content}
+                    </p>
+                ))}
+
+            </div>
         </div>
     );
 };

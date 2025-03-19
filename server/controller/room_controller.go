@@ -114,6 +114,12 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 		Path:   "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
+	c.SetCookie(&http.Cookie{
+		Name:   "is_owner",
+		Value:  "false",
+		Path:   "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
 	// 部屋に参加したことを確認
 	fmt.Println("Client joined:", clientName,"in room:", roomID)
 

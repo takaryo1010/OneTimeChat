@@ -118,7 +118,7 @@ const CreatePopup: React.FC = () => {
             window.location.href = `/chat`;
             
         }else{
-            alert('Room creation failed');
+            alert('ルームの作成に失敗しました');
         }
         
 

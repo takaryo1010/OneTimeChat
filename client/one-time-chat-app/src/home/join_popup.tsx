@@ -36,23 +36,26 @@ const JoinPopup: React.FC = () => {
         setUserName(event.target.value);
     };
 
-    const handleJoin = () => {
-        let messages: string[] = [];
-        if (!roomID) {
-            messages.push("ルームIDを入力してください");
+    const joinRoom = async () => {
+        const APIURL = process.env.REACT_APP_API_URL;
+        const URL = `${APIURL}/room/${roomID}`;
+        const response = await fetch(URL,
+            {
+                method: 'POST',
+                body: JSON.stringify({ client_name: userName }),
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            }
+        );
+        if (response.ok) {
+            const roomData = await response.json();
+            console.log(roomData);
+            window.location.href = `/chat`;
         }
-        if (!userName) {
-            messages.push("ユーザー名を入力してください");
+        else {
+            setErrorSentence('ルームへの参加に失敗しました');
         }
-        if (error) {
-            messages.push("エラー: " + error);
-        }
-        setErrorSentence(messages.join("\n"));
-
-        if (messages.length === 0) {
-            console.log("ルーム参加: ", roomID, userName);
-            closePopup();
-        }
+        
     };
 
     return (
@@ -117,7 +120,7 @@ const JoinPopup: React.FC = () => {
                                 variant="contained"
                                 color="primary"
                                 endIcon={<Icon path={mdiLogin} size={1} />}
-                                onClick={handleJoin}
+                                onClick={joinRoom}
                                 className="popup-button"
                                 disabled={!!error || !roomID || !userName}
                             >
