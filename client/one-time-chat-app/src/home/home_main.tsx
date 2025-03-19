@@ -17,12 +17,12 @@ const Home: React.FC = () => {
 
             {/* ルーム作成のポップアップ */}
             <CreatePopup />
-                {/* ルーム作成ボタン */}
-                
 
-                {/* ルーム参加ボタン */}
             <JoinPopup/>
             </Box>
+            <p>もし部屋を抜けてしまって戻りたい場合は下のボタンをクリックしてください</p>
+            <Button className="sub-button" href="/chat">部屋に戻る</Button>
+            <p>(部屋を抜けた後にルーム作成や参加をしていると戻れない場合があります)</p>
         </div>
     );
 }
