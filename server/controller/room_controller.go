@@ -143,14 +143,14 @@ func (mc *MainController) GetParticipants(c echo.Context) error {
 	}
 	type Participant struct {
 		Name    string `json:"name"`
-		isOwner bool   `json:"isOwner"`
+		IsOwner bool   `json:"isowner"`
 	}
 	participants := make([]Participant, 0)
 	for _, client := range room.AuthenticatedClients {
 		if client.SessionID == room.OwnerSessionID {
-			participants = append(participants, Participant{Name: client.Name, isOwner: true})
+			participants = append(participants, Participant{Name: client.Name, IsOwner: true})
 		} else {
-			participants = append(participants, Participant{Name: client.Name, isOwner: false})
+			participants = append(participants, Participant{Name: client.Name, IsOwner: false})
 		}
 	}
 

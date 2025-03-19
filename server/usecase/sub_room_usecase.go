@@ -6,8 +6,9 @@ import (
 
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/takaryo1010/OneTimeChat/server/model"
 	"math/rand/v2"
+
+	"github.com/takaryo1010/OneTimeChat/server/model"
 )
 
 func generateRoomID(rm *model.RoomManager) string {
