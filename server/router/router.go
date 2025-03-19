@@ -13,7 +13,7 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 
 	// CORS設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://192.168.0.0:3000"}, // フロントエンドのオリジン
+		AllowOrigins:     []string{"http://localhost:3000", "http://192.168.1.9:3000"}, // フロントエンドのオリジン
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete},
 		AllowCredentials: true,
 	}))
