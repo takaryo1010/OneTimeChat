@@ -1,6 +1,6 @@
 import React, { use, useEffect, useState } from 'react';
 import { connect } from 'socket.io-client';
-
+import './css/chat_main.css';
 const Chat: React.FC = () => {
     type Clients = {
         Name: string;
@@ -107,31 +107,35 @@ const Chat: React.FC = () => {
     }
 
     return (
-        <div>
-            
-            <h1>Chat Page</h1>
-            {roomInfo && (
-                <>
-                    <p>Room ID: {roomInfo.ID}</p>
-                    <p>Room Name: {roomInfo.name}</p>
-                    <p>Owner: {roomInfo.owner}</p>
-                    <p>Expires: {roomInfo.expires}</p>
-                </>
-            )}
-            <button 
-                onClick={() => {
-                    sendMessage('Hello, World!');
-                }}
-            >
-                Send Message
-            </button>
-            <div>
-                {message.map((m, index) => (
-                    <p key={index}>
-                        {m.sender}: {m.content}
-                    </p>
-                ))}
-
+        <div className="chat-container">
+            <div className="members-section">
+                <div className="members-header">メンバー (5人)</div>
+                <div className="member-item">Aさん (オーナー)</div>
+                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
+                <div className="member-item">1Aさん <span className="kick-button">キック</span></div>
+                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
+                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
+            </div>
+            <div className="chat-area">
+                <div className="chat-messages">
+                    {message.map((m, index) => (
+                        <p key={index} className="message">
+                            <span className="sender">{m.sender}:</span> {m.content}
+                        </p>
+                    ))}
+                </div>
+                <div className="message-input-area">
+                    <input type="text" className="message-input" placeholder="メッセージを入力..." />
+                    <button className="send-button" onClick={() => sendMessage('Hello, World!')}>送信</button>
+                </div>
+            </div>
+            <div className="requests-section">
+                <div className="requests-header">リクエスト</div>
+                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
+                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
+                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
+                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
+                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
             </div>
         </div>
     );
