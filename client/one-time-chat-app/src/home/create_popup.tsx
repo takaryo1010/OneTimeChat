@@ -61,18 +61,67 @@ const CreatePopup: React.FC = () => {
         setRequiresAuth(event.target.checked);
     };
 
-    const createRoom = () => {
+    const calculateExpiration = () => {
+        const currentDate = new Date();
+        const expirationDate = new Date(currentDate);
+        if (timeUnits === '時間') {
+            expirationDate.setHours(currentDate.getHours() + Number(expiry));
+        }
+        if (timeUnits === '日　') {
+            expirationDate.setDate(currentDate.getDate() + Number(expiry));
+        }
+        if (timeUnits === '分　') {
+            expirationDate.setMinutes(currentDate.getMinutes() + Number(expiry));
+        }
+        
+        return expirationDate.toISOString();
+    };
+
+
+
+    const createRoom = async () => {
         console.log("ルーム名:", roomName);
         console.log("ユーザー名:", userName);
         console.log("期限:", expiry, timeUnits);
         console.log("入室許可:", requiresAuth);
 
         const APIURL = process.env.REACT_APP_API_URL;
-        const url = `${APIURL}/create-room`;
+        const url = `${APIURL}/room`;
         console.log("API URL:", url);
 
+        const expirationTime = calculateExpiration();
 
-        closePopup();
+        console.log("期限:", expirationTime);
+
+        const data = {
+            name: roomName,
+            owner: userName,
+            expires: expirationTime,
+            requiresAuth: requiresAuth,
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            credentials: 'include',
+
+        });
+
+        if (response.ok) {
+            const roomData = await response.json();
+            console.log('Room creation response:', roomData);
+            console.log(roomData.ID);
+           
+            window.location.href = `/chat`;
+            
+        }else{
+            alert('Room creation failed');
+        }
+        
+
 
     }
 

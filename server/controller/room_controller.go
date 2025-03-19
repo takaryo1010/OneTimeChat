@@ -41,11 +41,17 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
-
+	c.SetCookie(&http.Cookie{
+		Name:    "room_id",
+		Value:   room.ID, // ここにRoomIDを設定
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
+	})
 	fmt.Println("Room created:", room.ID)
 	// ルーム作成成功時に返す
 	return c.JSON(http.StatusOK, room)
 }
+
 
 // GetRoom retrieves a specific room by ID.
 func (mc *MainController) GetRoom(c echo.Context) error {
