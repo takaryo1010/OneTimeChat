@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/labstack/echo"
@@ -46,7 +47,7 @@ func (mc *MainController) CreateRoom(c echo.Context) error {
 	})
 	c.SetCookie(&http.Cookie{
 		Name:    "user_name",
-		Value:   owner,
+		Value:   url.QueryEscape(owner),
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
@@ -104,7 +105,7 @@ func (mc *MainController) JoinRoom(c echo.Context) error {
 	})
 	c.SetCookie(&http.Cookie{
 		Name:    "user_name",
-		Value:   clientName,
+		Value:   url.QueryEscape(clientName),
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour), // セッションの有効期限
 	})
@@ -219,6 +220,9 @@ func (mc *MainController) LeaveRoom(c echo.Context) error {
 func (mc *MainController) IsAuth(c echo.Context) error {
 	roomID := c.Param("id")
 	clientSessionID := c.QueryParam("client_session_id")
-	isAuth := mc.RoomUsecase.IsAuth(roomID, clientSessionID)
+	isAuth, err := mc.RoomUsecase.IsAuth(roomID, clientSessionID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
 	return c.JSON(http.StatusOK, map[string]bool{"isAuth": isAuth})
 }
