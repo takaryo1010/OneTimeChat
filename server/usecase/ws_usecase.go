@@ -98,6 +98,18 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 
 	stringSentence := string(sentence)
 
+	type MessageType struct {
+		Type    string `json:"type"`
+		Content string `json:"content"`
+	}
+
+	var messageType MessageType
+	err := json.Unmarshal(sentence, &messageType)
+	if err != nil {
+		return
+	}
+	fmt.Println(messageType.Type)
+	fmt.Println(messageType.Content)
 	if !exists {
 		return
 	}
@@ -105,29 +117,61 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 
-	// メッセージデータを作成
-	message := model.Message{
-		RoomID:    roomID,
-		Sentence:  stringSentence,
-		Sender:    sender,
-		Timestamp: time.Now().Unix(), // 現在のUNIXタイムスタンプ
-	}
-
-	// メッセージをJSONにエンコード
-	messageJSON, err := json.Marshal(message)
-	if err != nil {
-		// エンコードエラー時の処理
-		return
-	}
-
-	// 各クライアントにJSONメッセージを送信
-	for _, client := range room.AuthenticatedClients {
-		if client.SessionID == sessionID {
-			continue
+	// Removed the initial assignment to message here
+	if messageType.Type == "message" {
+		// メッセージデータを作成
+		message := model.Message{
+			RoomID:    roomID,
+			Sentence:  messageType.Content,
+			Sender:    sender,
+			Timestamp: time.Now().Unix(), // 現在のUNIXタイムスタンプ
+			Type:      "message",
 		}
-		err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
+		// メッセージをJSONにエンコード
+		messageJSON, err := json.Marshal(message)
 		if err != nil {
-			client.Ws.Close()
+			// エンコードエラー時の処理
+			return
 		}
+
+		// 各クライアントにJSONメッセージを送信
+		for _, client := range room.AuthenticatedClients {
+			if client.SessionID == sessionID {
+				continue
+			}
+			err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
+			if err != nil {
+				client.Ws.Close()
+			}
+		}
+	} else if messageType.Type == "participants_update" {
+		// メッセージデータを作成
+		message := model.Message{
+			RoomID:    roomID,
+			Sentence:  stringSentence,
+			Sender:    sender,
+			Timestamp: time.Now().Unix(), // 現在のUNIXタイムスタンプ
+			Type:      "participants_update",
+		}
+		// メッセージをJSONにエンコード
+		messageJSON, err := json.Marshal(message)
+		if err != nil {
+			// エンコードエラー時の処理
+			return
+		}
+
+		for _, client := range room.AuthenticatedClients {
+			err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
+			if err != nil {
+				client.Ws.Close()
+			}
+		}
+		for _, client := range room.UnauthenticatedClients {
+			err := client.Ws.WriteMessage(websocket.TextMessage, messageJSON)
+			if err != nil {
+				client.Ws.Close()
+			}
+		}
+
 	}
 }

@@ -58,6 +58,7 @@ type Message struct {
 	Sentence  string `json:"sentence"`  // メッセージ本文
 	Sender    string `json:"sender"`    // 送信者
 	Timestamp int64  `json:"timestamp"` // タイムスタンプ
+	Type      string `json:"type"`      // メッセージの種類
 }
 
 // Participant は参加者を表す構造体

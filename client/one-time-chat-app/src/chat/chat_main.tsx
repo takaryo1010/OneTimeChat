@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Box, List, ListItem, ListItemText } from '@mui/material';
+import React, { use, useEffect, useState } from 'react';
+import { CircularProgress, Button, Typography, Box } from '@mui/material';
 import './css/chat_main.css';
 import ChatArea from './chat_area.tsx';
 
@@ -29,6 +29,7 @@ const Chat: React.FC = () => {
     const [authenticatedClients, setAuthenticatedClients] = useState<Clients[]>([]);
     const [unauthenticatedClients, setUnauthenticatedClients] = useState<Clients[]>([]);
     const [isOwner, setIsOwner] = useState<boolean>(false);
+    const [isTryingToConnect, setIsTryingToConnect] = useState<boolean>(false);
 
     const getCookie = (name: string) => {
         const cookies = document.cookie.split('; ');
@@ -49,7 +50,15 @@ const Chat: React.FC = () => {
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log('Received:', data);
-            setMessage((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence, isMe: false }]);
+            if (data.type === 'message') {
+                setMessage((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence, isMe: false }]);
+            } else if (data.type === 'participants_update') {
+                fetchParticipants();
+                if(!isAuthenticated) {
+                    setupRoom();
+                    setIsTryingToConnect(false);
+                }
+            }
         };
         ws.onclose = () => {
             setIsConnectedWS(false);
@@ -60,6 +69,10 @@ const Chat: React.FC = () => {
             console.error('WebSocket error:', error);
         };
         setWs(ws);
+        
+
+        console.log('WebSocket:', ws);
+
     };
 
     const sendMessage = (message: string) => {
@@ -69,7 +82,7 @@ const Chat: React.FC = () => {
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
             setMessage((prevMessages) => [...prevMessages, { sender: clientName, content: message, isMe: true }]);
-            ws.send(message);
+            ws.send(JSON.stringify({ type: 'message', content: message }));
         } else {
             console.error('WebSocketはまだ開いていません。現在の状態:', ws?.readyState);
         }
@@ -114,8 +127,15 @@ const Chat: React.FC = () => {
                 setIsAuthenticated(true);
                 connectToRoom(roomID);
             } else {
-                setIsAuthenticated(false);
-                console.log('Not Authenticated');
+                if (isTryingToConnect) {
+                    console.log('Failed to authenticate');
+                    setIsAuthenticated(false);
+                }else {
+                    setIsAuthenticated(false);
+                    connectToRoom(roomID);
+                    setIsTryingToConnect(true);
+                    console.log('Not Authenticated');
+                }
             }
         } else {
             console.log('Room ID not found');
@@ -151,9 +171,8 @@ const Chat: React.FC = () => {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
-        }).then(() => {
-            fetchParticipants();
         });
+        handleMessageUpdateParticipants();
 
     };
 
@@ -175,17 +194,28 @@ const Chat: React.FC = () => {
         } else {
             console.error('Failed to approve');
         }
-        fetchParticipants();
+        handleMessageUpdateParticipants();
     };
 
-    const setupRoom = () => {
+
+    const handleMessageUpdateParticipants = () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            console.log('Sending participants_update');
+            ws.send(JSON.stringify({ type: 'participants_update' }));
+        }
+    };
+
+    const setupRoom = () => {;
         fetchRoomInfo();
         fetchParticipants();
     }
 
+
     useEffect(() => {
         setupRoom();
     }, []);
+
+
 
     if (isLoading) {
         return (
@@ -216,6 +246,8 @@ const Chat: React.FC = () => {
 
     return (
         <div className="chat-container">
+        <button onClick={handleMessageUpdateParticipants}></button>
+
             <div className="members-section">
                 <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
                 {authenticatedClients.map((client) => (
