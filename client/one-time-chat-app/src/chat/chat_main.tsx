@@ -3,18 +3,16 @@ import { CircularProgress, Button, Typography, Box, List, ListItem, ListItemText
 import './css/chat_main.css';
 import ChatArea from './chat_area.tsx';
 
-
 const Chat: React.FC = () => {
     type Clients = {
-        Name: string;
-        SessionID: string;
-        Ws: any;
+        name: string;
+        clientid: string;
+        isowner?: boolean;
     };
     type RoomInfo = {
         ID: string;
         name: string;
         owner: string;
-        ownerSessionID: string;
         expires: string;
         requiresAuth: boolean;
         UnauthenticatedClients: Clients[];
@@ -25,16 +23,18 @@ const Chat: React.FC = () => {
     const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
     const [ws, setWs] = useState<any>(null);
     const [isConnectedWS, setIsConnectedWS] = useState<boolean>(false);
-    const [message, setMessage] = useState<{ sender: string; content: string; isMe:boolean }[]>([]);
+    const [message, setMessage] = useState<{ sender: string; content: string; isMe: boolean }[]>([]);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true); // 初期値を true に設定
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [authenticatedClients, setAuthenticatedClients] = useState<Clients[]>([]);
+    const [unauthenticatedClients, setUnauthenticatedClients] = useState<Clients[]>([]);
+    const [isOwner, setIsOwner] = useState<boolean>(false);
 
     const getCookie = (name: string) => {
         const cookies = document.cookie.split('; ');
         const cookie = cookies.find(row => row.startsWith(`${name}=`));
-        return cookie ? decodeURIComponent(cookie.split('=')[1]) : null; // URLデコードを追加
+        return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
     };
-    
 
     const connectToRoom = async (roomID: string) => {
         const APIURL = process.env.REACT_APP_WSAPI_URL;
@@ -45,7 +45,7 @@ const Chat: React.FC = () => {
         ws.onopen = () => {
             setIsConnectedWS(true);
             console.log('WebSocket connected');
-        }
+        };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log('Received:', data);
@@ -68,7 +68,7 @@ const Chat: React.FC = () => {
             clientName = 'Unknown';
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
-            setMessage((prevMessages) => [...prevMessages, { sender:clientName, content: message, isMe: true }]);
+            setMessage((prevMessages) => [...prevMessages, { sender: clientName, content: message, isMe: true }]);
             ws.send(message);
         } else {
             console.error('WebSocketはまだ開いていません。現在の状態:', ws?.readyState);
@@ -76,8 +76,9 @@ const Chat: React.FC = () => {
     };
 
     const fetchRoomInfo = async () => {
-        const isOwner = getCookie('is_owner') === 'true';
-        console.log('isOwner:', isOwner);
+        const ownerFlag = getCookie('is_owner') === 'true';
+        setIsOwner(ownerFlag);
+        console.log('isOwner:', ownerFlag);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
         if (isOwner) {
@@ -91,14 +92,11 @@ const Chat: React.FC = () => {
             });
 
             const roomData = await response.json();
-            if (roomData.ownerSessionID !== getCookie('session_id')) {
-                console.log('Owner session ID does not match');
-                alert("あなたはオーナーではありません。cookieは変更しないでください。");
-                return;
-            }
+            console.log('Room Data:', roomData);
+
             setIsAuthenticated(true);
             setRoomInfo(roomData);
-            if (roomID){
+            if (roomID) {
                 connectToRoom(roomID);
             }
         } else if (roomID) {
@@ -122,11 +120,71 @@ const Chat: React.FC = () => {
         } else {
             console.log('Room ID not found');
         }
-        setIsLoading(false); // ローディングを終了
+        setIsLoading(false);
     };
 
-    useEffect(() => {
+    const fetchParticipants = async () => {
+        const roomID = getCookie('room_id');
+        const APIURL = process.env.REACT_APP_API_URL;
+        const URL = `${APIURL}/room/${roomID}/participants`;
+        const response = await fetch(URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+        const participants = await response.json();
+        console.log('Participants:', participants);
+        setAuthenticatedClients(participants.authenticatedClients);
+        setUnauthenticatedClients(participants.unauthenticatedClients);
+    };
+
+    const handleKick = (clientId: string) => {
+        console.log(`Kick client with ID: ${clientId}`);
+        const roomID = getCookie('room_id');
+        const APIURL = process.env.REACT_APP_API_URL;
+        const URL = `${APIURL}/room/${roomID}/kick?client_id=${clientId}`;
+        fetch(URL, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        }).then(() => {
+            fetchParticipants();
+        });
+
+    };
+
+    const handleApprove = async(clientId: string) => {
+        console.log(`Approve client with ID: ${clientId}`);
+        const roomID = getCookie('room_id');
+        const APIURL = process.env.REACT_APP_API_URL;
+        const URL = `${APIURL}/room/${roomID}/auth?client_id=${clientId}`;
+        
+        const response = await fetch(URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+        if (response.ok) {
+            console.log('Approved');
+        } else {
+            console.error('Failed to approve');
+        }
+        fetchParticipants();
+    };
+
+    const setupRoom = () => {
         fetchRoomInfo();
+        fetchParticipants();
+    }
+
+    useEffect(() => {
+        setupRoom();
     }, []);
 
     if (isLoading) {
@@ -141,7 +199,7 @@ const Chat: React.FC = () => {
         return (
             <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4">認証されていません</Typography>
-                <Button variant="contained" onClick={fetchRoomInfo} sx={{ marginTop: 2 }}>
+                <Button variant="contained" onClick={setupRoom} sx={{ marginTop: 2 }}>
                     再試行
                 </Button>
             </Box>
@@ -156,26 +214,31 @@ const Chat: React.FC = () => {
         );
     }
 
-
     return (
         <div className="chat-container">
             <div className="members-section">
-                <div className="members-header">メンバー (5人)</div>
-                <div className="member-item">Aさん (オーナー)</div>
-                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
-                <div className="member-item">1Aさん <span className="kick-button">キック</span></div>
-                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
-                <div className="member-item">0Aさん <span className="kick-button">キック</span></div>
+                <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
+                {authenticatedClients.map((client) => (
+                    <div key={client.clientid} className="member-item">
+                        {client.name} {client.isowner && '(オーナー)'}
+                        {!client.isowner && isOwner && (
+                            <span className="kick-button" onClick={() => handleKick(client.clientid)}>キック</span>
+                        )}
+                    </div>
+                ))}
             </div>
             <ChatArea message={message} sendMessage={sendMessage} />
-            <div className="requests-section">
-                <div className="requests-header">リクエスト</div>
-                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
-                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
-                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
-                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
-                <div className="request-item">Aさん <span className="approve-button">承認</span></div>
-            </div>
+            {isOwner && (
+                <div className="requests-section">
+                    <div className="requests-header">リクエスト ({unauthenticatedClients.length}人)</div>
+                    { unauthenticatedClients.map((client) => (
+                        <div key={client.clientid} className="request-item">
+                            {client.name} <span className="approve-button" onClick={() => handleApprove(client.clientid)}>承認</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
         </div>
     );
 };

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -29,14 +30,14 @@ func NewRoomUsecase() *RoomUsecase {
 }
 
 // CreateRoom 新しい部屋を作る
-func (uc *RoomUsecase) CreateRoom(room *model.Room) (*model.Room, error) {
+func (uc *RoomUsecase) CreateRoom(room *model.Room) (*model.ResponseRoom, string, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
 	// セッションIDの生成
 	sessionID, err := GenerateSessionID()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	roomID := generateRoomID(uc.RoomManager) // 任意のID生成関数を使用
@@ -59,17 +60,20 @@ func (uc *RoomUsecase) CreateRoom(room *model.Room) (*model.Room, error) {
 	// オーナーを部屋に追加
 	client := &model.Client{
 		Name:      room.Owner,
+		ClientID:  GeneratedClientID(uc.RoomManager),
 		SessionID: sessionID,
 		Ws:        nil,
 	}
 
 	room.AuthenticatedClients = append(room.AuthenticatedClients, client)
 
-	return room, nil
+	res := changedForResponse(room)
+	return res, client.SessionID, nil
+
 }
 
 // GetRoomByID retrieves a room by its ID.
-func (uc *RoomUsecase) GetRoomByID(roomID string) (*model.Room, error) {
+func (uc *RoomUsecase) GetRoomByID(roomID string) (*model.ResponseRoom, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
@@ -77,7 +81,8 @@ func (uc *RoomUsecase) GetRoomByID(roomID string) (*model.Room, error) {
 	if !exists {
 		return nil, errors.New("room not found")
 	}
-	return room, nil
+	res := changedForResponse(room)
+	return res, nil
 }
 
 // JoinRoom allows a client to join a room.
@@ -98,10 +103,12 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName string) (string, error) {
 
 	client := &model.Client{
 		Name:      clientName,
+		ClientID:  GeneratedClientID(uc.RoomManager),
 		SessionID: generatedSessionID,
 		Ws:        nil,
 	}
-
+	fmt.Println("Client joined:", clientName)
+	fmt.Println("Client ID:", client.ClientID)
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 	if room.RequiresAuth {
@@ -114,7 +121,7 @@ func (uc *RoomUsecase) JoinRoom(roomID, clientName string) (string, error) {
 
 }
 
-func (uc *RoomUsecase) Authenticate(roomID, client_session_id, owner_session_id string) error {
+func (uc *RoomUsecase) Authenticate(roomID, client_id, owner_session_id string) error {
 	uc.RoomManager.Mu.Lock()
 	room, exists := uc.RoomManager.Rooms[roomID]
 	uc.RoomManager.Mu.Unlock()
@@ -123,17 +130,20 @@ func (uc *RoomUsecase) Authenticate(roomID, client_session_id, owner_session_id 
 		return errors.New("room not found")
 	}
 
-	if room.OwnerSessionID != owner_session_id {
-		return errors.New("you are not the owner of this room")
-	}
-
+	//オーナーのクライアントＩＤを取得
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 
-	isClientInRoom := false
+	fmt.Println("OwnerSessionID:", room.OwnerSessionID)
+	fmt.Println("OwnerSessionID:", owner_session_id)
+	if owner_session_id != room.OwnerSessionID {
+		return errors.New("you are not the owner of this room")
+	}
 
+	isClientInRoom := false
+	fmt.Println("ClientID:", client_id)
 	for i, client := range room.UnauthenticatedClients {
-		if client.SessionID == client_session_id {
+		if client.ClientID == client_id {
 			room.AuthenticatedClients = append(room.AuthenticatedClients, client)
 			room.UnauthenticatedClients = append(room.UnauthenticatedClients[:i], room.UnauthenticatedClients[i+1:]...)
 			isClientInRoom = true
@@ -148,7 +158,7 @@ func (uc *RoomUsecase) Authenticate(roomID, client_session_id, owner_session_id 
 	return nil
 }
 
-func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings *model.Room, owner_session_id string) (*model.Room, error) {
+func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings *model.Room, owner_session_id string) (*model.ResponseRoom, error) {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
@@ -163,7 +173,9 @@ func (uc *RoomUsecase) UpdateRoomSettings(roomID string, newRoomSettings *model.
 	room.Name = newRoomSettings.Name
 	room.RequiresAuth = newRoomSettings.RequiresAuth
 
-	return room, nil
+	res := changedForResponse(room)
+
+	return res, nil
 }
 
 func (uc *RoomUsecase) DeleteRoom(roomID, owner_session_id string) error {
@@ -182,7 +194,7 @@ func (uc *RoomUsecase) DeleteRoom(roomID, owner_session_id string) error {
 	return nil
 }
 
-func (uc *RoomUsecase) KickParticipant(roomID, client_session_id, owner_session_id string) error {
+func (uc *RoomUsecase) KickParticipant(roomID, client_id, owner_session_id string) error {
 	uc.RoomManager.Mu.Lock()
 	defer uc.RoomManager.Mu.Unlock()
 
@@ -197,17 +209,13 @@ func (uc *RoomUsecase) KickParticipant(roomID, client_session_id, owner_session_
 	room.Mu.Lock()
 	defer room.Mu.Unlock()
 
-	if owner_session_id == client_session_id {
-		return errors.New("you can't kick yourself")
-	}
-
-	if client_session_id == "" {
-		return errors.New("client_session_id is required")
+	if client_id == "" {
+		return errors.New("client_id is required")
 	}
 
 	isClientInRoom := false
 	for i, client := range room.AuthenticatedClients {
-		if client.SessionID == client_session_id {
+		if client.ClientID == client_id {
 			room.AuthenticatedClients = append(room.AuthenticatedClients[:i], room.AuthenticatedClients[i+1:]...)
 			isClientInRoom = true
 			break
@@ -268,4 +276,33 @@ func (uc *RoomUsecase) IsAuth(roomID, clientSessionID string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (uc *RoomUsecase) GetParticipants(roomID string) ([]model.Participant, []model.Participant, error) {
+	uc.RoomManager.Mu.Lock()
+	defer uc.RoomManager.Mu.Unlock()
+
+	room, exists := uc.RoomManager.Rooms[roomID]
+	if !exists {
+		return nil, nil, errors.New("room not found")
+	}
+
+	room.Mu.Lock()
+	defer room.Mu.Unlock()
+
+	participants := make([]model.Participant, 0)
+	for _, client := range room.AuthenticatedClients {
+		if client.SessionID == room.OwnerSessionID {
+			participants = append(participants, model.Participant{Name: client.Name, ClientID: client.ClientID, IsOwner: true})
+		} else {
+			participants = append(participants, model.Participant{Name: client.Name, ClientID: client.ClientID, IsOwner: false})
+		}
+	}
+
+	unauthenticatedClients := make([]model.Participant, 0)
+	for _, client := range room.UnauthenticatedClients {
+		unauthenticatedClients = append(unauthenticatedClients, model.Participant{Name: client.Name, ClientID: client.ClientID, IsOwner: false})
+	}
+
+	return participants, unauthenticatedClients, nil
 }

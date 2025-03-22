@@ -57,3 +57,40 @@ func GenerateSessionID() (string, error) {
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:]), nil
 }
+
+func GeneratedClientID(roomInfo *model.RoomManager) string {
+	const chars = "ABCDEFGHJKLMNPQRSTUVWXY0123456789"
+	clientID := ""
+	for i := 0; i < 10; i++ {
+		clientID += string(chars[rand.IntN(len(chars))])
+	}
+	if _, exists := roomInfo.Rooms[clientID]; exists {
+		return GeneratedClientID(roomInfo)
+	}
+
+	return clientID
+
+}
+
+func changedForResponse(room *model.Room) *model.ResponseRoom {
+	res := &model.ResponseRoom{
+		ID:           room.ID,
+		Name:         room.Name,
+		Owner:        room.Owner,
+		Expires:      room.Expires,
+		RequiresAuth: room.RequiresAuth,
+	}
+	for _, client := range room.UnauthenticatedClients {
+		res.UnauthenticatedClients = append(res.UnauthenticatedClients, &model.ResponseClient{
+			Name:     client.Name,
+			ClientID: client.ClientID,
+		})
+	}
+	for _, client := range room.AuthenticatedClients {
+		res.AuthenticatedClients = append(res.AuthenticatedClients, &model.ResponseClient{
+			Name:     client.Name,
+			ClientID: client.ClientID,
+		})
+	}
+	return res
+}

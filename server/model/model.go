@@ -27,11 +27,29 @@ type Room struct {
 	Mu                     sync.Mutex // スレッドセーフにするためのミューテックス
 }
 
+// ResponseRoom
+type ResponseRoom struct {
+	ID                     string            `json:"ID"`                     // ルームID
+	Name                   string            `json:"name"`                   // ルーム名
+	Owner                  string            `json:"owner"`                  // ルームのオーナー
+	Expires                time.Time         `json:"expires"`                // 有効期限
+	RequiresAuth           bool              `json:"requiresAuth"`           // 認証が必要かどうか
+	UnauthenticatedClients []*ResponseClient `json:"unauthenticatedClients"` // ルームへの接続許可待ちのクライアント
+	AuthenticatedClients   []*ResponseClient `json:"authenticatedClients"`   // ルームへの接続許可がされているクライアント
+}
+
 // Client はチャットルームに参加しているユーザーを表す構造体
 type Client struct {
 	Name      string          // クライアント名
+	ClientID  string          // クライアントID
 	SessionID string          // セッションID
 	Ws        *websocket.Conn // WebSocket接続
+}
+
+// ResponseClient はクライアント情報を表す構造体
+type ResponseClient struct {
+	Name     string `json:"name"`     // クライアント名
+	ClientID string `json:"clientID"` // クライアントID
 }
 
 // Message はチャットメッセージを表す構造体
@@ -40,4 +58,11 @@ type Message struct {
 	Sentence  string `json:"sentence"`  // メッセージ本文
 	Sender    string `json:"sender"`    // 送信者
 	Timestamp int64  `json:"timestamp"` // タイムスタンプ
+}
+
+// Participant は参加者を表す構造体
+type Participant struct {
+	Name     string `json:"name"`
+	ClientID string `json:"clientid"`
+	IsOwner  bool   `json:"isowner"`
 }
