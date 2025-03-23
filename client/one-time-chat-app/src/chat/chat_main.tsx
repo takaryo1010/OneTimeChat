@@ -1,5 +1,7 @@
 import React, { use, useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Box } from '@mui/material';
+import { Refresh, Send } from '@mui/icons-material';
+import IconButton from '@mui/material/IconButton';
 import './css/chat_main.css';
 import ChatArea from './chat_area.tsx';
 
@@ -246,8 +248,25 @@ const Chat: React.FC = () => {
 
     return (
         <div className="chat-container">
-        <button onClick={handleMessageUpdateParticipants}></button>
-
+            {/* 画面左上に固定配置するボタン */}
+            <IconButton className="refresh-button" 
+            title='メンバー、リクエストのリストを更新'
+            onClick={setupRoom} 
+            sx={{
+                position: 'absolute',
+                bottom: 10,
+                left: 10,
+                width: 60,  // ボタンの幅
+                height: 60, // ボタンの高さ
+                bgcolor: 'primary.main', // 背景色
+                color: 'white', // アイコンの色
+                '&:hover': {
+                    bgcolor: 'primary.dark', // ホバー時に色を変更
+                },
+            }}>
+                        <Refresh />
+            </IconButton>
+    
             <div className="members-section">
                 <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
                 {authenticatedClients.map((client) => (
@@ -259,20 +278,22 @@ const Chat: React.FC = () => {
                     </div>
                 ))}
             </div>
+    
             <ChatArea message={message} sendMessage={sendMessage} />
+    
             {isOwner && (
                 <div className="requests-section">
                     <div className="requests-header">リクエスト ({unauthenticatedClients.length}人)</div>
-                    { unauthenticatedClients.map((client) => (
+                    {unauthenticatedClients.map((client) => (
                         <div key={client.clientid} className="request-item">
                             {client.name} <span className="approve-button" onClick={() => handleApprove(client.clientid)}>承認</span>
                         </div>
                     ))}
                 </div>
             )}
-
         </div>
     );
+    
 };
 
 export default Chat;

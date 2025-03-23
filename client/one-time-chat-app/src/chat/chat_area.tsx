@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import './css/chat_area.css';
+import { Box, TextField, IconButton, Typography, Button } from '@mui/material';
+import { Send } from '@mui/icons-material';
 
 interface Message {
   sender: string;
@@ -16,34 +17,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ message, sendMessage }) => {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [expandedMessages, setExpandedMessages] = useState<boolean[]>(message.map(() => false));
 
-  const changeInputMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const changeInputMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
 
   const handleSendMessage = () => {
     if (inputMessage.trim() !== '') {
-      console.log('send message:', inputMessage);
       sendMessage(inputMessage);
       setInputMessage('');
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // デフォルトの改行を防ぐ
+      e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // テキストエリアの高さを動的に調整
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputMessage(e.target.value);
-    const textarea = e.target;
-    textarea.style.height = 'auto'; // 高さをリセット
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 10 * 24)}px`; // 10行分以上にならないように設定
-  };
-
-  // もっと見る/閉じるボタンをクリックしたときの処理
   const toggleExpandMessage = (index: number) => {
     setExpandedMessages((prev) => {
       const newState = [...prev];
@@ -52,52 +43,86 @@ const ChatArea: React.FC<ChatAreaProps> = ({ message, sendMessage }) => {
     });
   };
 
-  // 5行を超えたメッセージの判定
   const getMessageContent = (content: string, index: number) => {
     const maxLines = 5;
     const maxChars = 200;
     const lines = content.split('\n');
     const charCount = content.length;
 
-    if (lines.length > maxLines || charCount > maxChars) {
-      const displayedContent = expandedMessages[index]
-        ? content
-        : lines.slice(0, maxLines).join('\n').substring(0, maxChars);
-      return (
-        <div>
-          <div className="message-content">{displayedContent}</div>
-          <button className="expand-button" onClick={() => toggleExpandMessage(index)}>
+    const isLongMessage = lines.length > maxLines || charCount > maxChars;
+    const shouldTruncate = isLongMessage && !expandedMessages[index];
+
+    return (
+      <Box>
+        <Typography
+          variant="body1"
+          sx={{
+            whiteSpace: 'pre-wrap',
+            overflow: 'hidden',
+            maxHeight: shouldTruncate ? '5em' : 'none',
+          }}
+        >
+          {content}
+        </Typography>
+        {isLongMessage && (
+          <Button size="small" onClick={() => toggleExpandMessage(index)}>
             {expandedMessages[index] ? '閉じる' : '続きを見る'}
-          </button>
-        </div>
-      );
-    }
-    return <div className="message-content">{content}</div>;
+          </Button>
+        )}
+      </Box>
+    );
   };
 
   return (
-    <div className="chat-area">
-      <div className="chat-messages">
-        {message.map((m, index) => (
-          <div key={index} className={`message ${m.isMe ? 'me' : 'other'}`}>
-            <span className="sender">{m.sender}:</span>
-            {getMessageContent(m.content, index)}
-          </div>
-        ))}
-      </div>
-      <div className="message-input-area">
-        <textarea
-          className="message-input"
-          placeholder="メッセージを入力...（Shift + Enter で改行、Enter で送信）"
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
+      {/* メッセージ表示エリア（スクロール可能） */}
+      <Box sx={{ flex: 1, overflowY: 'auto', padding: 2, '&::-webkit-scrollbar': { display: 'none' } }}>
+  {message.map((m, index) => (
+        <Box
+          key={index}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignSelf: m.isMe ? 'flex-end' : 'flex-start', // 自分のメッセージは右寄せ、他人のは左寄せ
+            backgroundColor: m.isMe ? '#dcf8c6' : '#ffffff', // 自分は薄緑、他人は白
+            color: 'black',
+            padding: 1.5,
+            borderRadius: 2,
+            marginBottom: 1,
+            maxWidth: '70%',
+            boxShadow: 1,
+            marginLeft: m.isMe ? 'auto' : undefined, // 自分のメッセージは右寄せ
+            marginRight: !m.isMe ? 'auto' : undefined, // 他の人のメッセージは左寄せ
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#555' }}>
+            {m.sender}
+          </Typography>
+          {getMessageContent(m.content, index)}
+        </Box>
+      ))}
+    </Box>
+
+
+      {/* メッセージ入力エリア（固定） */}
+      <Box sx={{ display: 'flex', alignItems: 'center', borderTop: '1px solid #ccc', padding: 1 ,overflow:`hidden`}}>
+        <TextField
+          fullWidth
+          multiline
+          placeholder="メッセージを入力..."
           value={inputMessage}
           onChange={changeInputMessage}
           onKeyDown={handleKeyDown}
-          onInput={handleInput} // テキストエリアの高さを調整
-          rows={1} // 最初は1行分
+          variant="outlined"
+          sx={{
+            '& .MuiInputBase-root': { borderRadius: '20px', paddingLeft: 2 },
+          }}
         />
-        <button className="send-button" onClick={handleSendMessage}>送信</button>
-      </div>
-    </div>
+        <IconButton color="primary" onClick={handleSendMessage} sx={{ marginLeft: 1 }}>
+          <Send />
+        </IconButton>
+      </Box>
+    </Box>
   );
 };
 

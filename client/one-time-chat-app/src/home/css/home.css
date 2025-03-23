@@ -8,6 +8,11 @@
     background-color: #f5f5f5;
 }
 
+
+body::-webkit-scrollbar {
+    display: none;
+  }
+
 .home {
     text-align: center;
     margin-top: 50px;

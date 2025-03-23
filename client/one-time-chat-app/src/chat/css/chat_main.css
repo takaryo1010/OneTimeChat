@@ -3,22 +3,25 @@
     width: 100%;
     height: 100vh;
     box-sizing: border-box;
-    border: 1px solid #ccc;
-    background-color: #f0f0f0;
+    background-color: #f5f5f5;
 }
 
+/* メンバー・リクエストセクションのスタイル */
 .members-section, .requests-section {
     width: 200px;
     border-right: 1px solid #ccc;
     padding: 10px;
     background-color: #e0e0e0;
+    margin: 0; /* 余計な隙間が入らないように設定 */
 }
 
+/* メンバーセクションの上部のマージン */
 .members-header, .requests-header {
     font-weight: bold;
-    margin-bottom: 10px;
+    margin: 0 0 10px 0; /* 上部の余白を調整 */
 }
 
+/* メンバーアイテム・リクエストアイテムのスタイル */
 .member-item, .request-item {
     padding: 5px;
     border-bottom: 1px solid #ddd;
@@ -27,6 +30,7 @@
     align-items: center;
 }
 
+/* 承認ボタン・キックボタンのスタイル */
 .kick-button, .approve-button {
     background-color: #ddd;
     border: none;
@@ -34,12 +38,23 @@
     cursor: pointer;
 }
 
+/* リクエストセクションのマージン調整 */
+.requests-section {
+    margin-top: 0; /* 上の隙間を0に設定 */
+}
 
 
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-size: 24px;
+
+/* スマートフォン等の小さな画面でのレスポンシブ対応 */
+@media (max-width: 768px) {
+    .members-section, .requests-section {
+        width: 100%;
+        border-right: none;
+        padding: 10px;
+        box-shadow: none;
+    }
+    
+    .chat-container {
+        flex-direction: column;
+    }
 }
