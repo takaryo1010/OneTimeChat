@@ -1,7 +1,6 @@
-import React, { use, useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Box } from '@mui/material';
-import { Refresh, Send } from '@mui/icons-material';
-import IconButton from '@mui/material/IconButton';
+import React, { useEffect, useState } from 'react';
+import { CircularProgress, Button, Typography, Box, IconButton } from '@mui/material';
+import { Refresh, RemoveCircle } from '@mui/icons-material';  // RemoveCircle アイコンを使用
 import './css/chat_main.css';
 import ChatArea from './chat_area.tsx';
 
@@ -71,10 +70,8 @@ const Chat: React.FC = () => {
             console.error('WebSocket error:', error);
         };
         setWs(ws);
-        
 
         console.log('WebSocket:', ws);
-
     };
 
     const sendMessage = (message: string) => {
@@ -132,7 +129,7 @@ const Chat: React.FC = () => {
                 if (isTryingToConnect) {
                     console.log('Failed to authenticate');
                     setIsAuthenticated(false);
-                }else {
+                } else {
                     setIsAuthenticated(false);
                     connectToRoom(roomID);
                     setIsTryingToConnect(true);
@@ -175,15 +172,14 @@ const Chat: React.FC = () => {
             credentials: 'include',
         });
         handleMessageUpdateParticipants();
-
     };
 
-    const handleApprove = async(clientId: string) => {
+    const handleApprove = async (clientId: string) => {
         console.log(`Approve client with ID: ${clientId}`);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
         const URL = `${APIURL}/room/${roomID}/auth?client_id=${clientId}`;
-        
+
         const response = await fetch(URL, {
             method: 'POST',
             headers: {
@@ -199,7 +195,6 @@ const Chat: React.FC = () => {
         handleMessageUpdateParticipants();
     };
 
-
     const handleMessageUpdateParticipants = () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
             console.log('Sending participants_update');
@@ -207,17 +202,14 @@ const Chat: React.FC = () => {
         }
     };
 
-    const setupRoom = () => {;
+    const setupRoom = () => {
         fetchRoomInfo();
         fetchParticipants();
-    }
-
+    };
 
     useEffect(() => {
         setupRoom();
     }, []);
-
-
 
     if (isLoading) {
         return (
@@ -249,51 +241,67 @@ const Chat: React.FC = () => {
     return (
         <div className="chat-container">
             {/* 画面左上に固定配置するボタン */}
-            <IconButton className="refresh-button" 
-            title='メンバー、リクエストのリストを更新'
-            onClick={setupRoom} 
-            sx={{
-                position: 'absolute',
-                bottom: 10,
-                left: 10,
-                width: 60,  // ボタンの幅
-                height: 60, // ボタンの高さ
-                bgcolor: 'primary.main', // 背景色
-                color: 'white', // アイコンの色
-                '&:hover': {
-                    bgcolor: 'primary.dark', // ホバー時に色を変更
-                },
-            }}>
-                        <Refresh />
+            <IconButton
+                className="refresh-button"
+                title="メンバー、リクエストのリストを更新"
+                onClick={setupRoom}
+                sx={{
+                    position: 'absolute',
+                    bottom: 10,
+                    left: 10,
+                    width: 60, // ボタンの幅
+                    height: 60, // ボタンの高さ
+                    bgcolor: 'primary.main', // 背景色
+                    color: 'white', // アイコンの色
+                    '&:hover': {
+                        bgcolor: 'primary.dark', // ホバー時に色を変更
+                    },
+                }}
+            >
+                <Refresh />
             </IconButton>
-    
+
             <div className="members-section">
                 <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
                 {authenticatedClients.map((client) => (
                     <div key={client.clientid} className="member-item">
                         {client.name} {client.isowner && '(オーナー)'}
                         {!client.isowner && isOwner && (
-                            <span className="kick-button" onClick={() => handleKick(client.clientid)}>キック</span>
+                            <IconButton
+                                color="error"
+                                title="退室させる"
+                                onClick={() => handleKick(client.clientid)}
+                                sx={{ marginLeft: 2 }}
+                            >
+                                <RemoveCircle />
+                            </IconButton>
                         )}
                     </div>
                 ))}
             </div>
-    
+
             <ChatArea message={message} sendMessage={sendMessage} />
-    
+
             {isOwner && (
                 <div className="requests-section">
                     <div className="requests-header">リクエスト ({unauthenticatedClients.length}人)</div>
                     {unauthenticatedClients.map((client) => (
                         <div key={client.clientid} className="request-item">
-                            {client.name} <span className="approve-button" onClick={() => handleApprove(client.clientid)}>承認</span>
+                            {client.name}{' '}
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleApprove(client.clientid)}
+                                sx={{ marginLeft: 2 }}
+                            >
+                                承認
+                            </Button>
                         </div>
                     ))}
                 </div>
             )}
         </div>
     );
-    
 };
 
 export default Chat;

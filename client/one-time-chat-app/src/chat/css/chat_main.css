@@ -19,15 +19,23 @@
 .members-header, .requests-header {
     font-weight: bold;
     margin: 0 0 10px 0; /* 上部の余白を調整 */
+    text-align: center;
+    background-color: #f0f0f0;
+    padding: 5px;
+    border-radius: 5px;
 }
 
 /* メンバーアイテム・リクエストアイテムのスタイル */
 .member-item, .request-item {
-    padding: 5px;
+    padding: 10px;
     border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    margin-bottom: 5px;
 }
 
 /* 承認ボタン・キックボタンのスタイル */
