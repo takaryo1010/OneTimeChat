@@ -41,8 +41,7 @@ const Chat: React.FC = () => {
     const connectToRoom = async (roomID: string) => {
         const APIURL = process.env.REACT_APP_WSAPI_URL;
         const clientName = getCookie('user_name');
-        const cookiesSessionID = getCookie('session_id');
-        const URL = `${APIURL}/ws?room_id=${roomID}&client_name=${clientName}&session_id=${cookiesSessionID}`;
+        const URL = `${APIURL}/ws?room_id=${roomID}&client_name=${clientName}`;
         const ws = new WebSocket(URL);
         ws.onopen = () => {
             setIsConnectedWS(true);
@@ -112,8 +111,7 @@ const Chat: React.FC = () => {
                 connectToRoom(roomID);
             }
         } else if (roomID) {
-            const sessionID = getCookie('session_id');
-            const URL = `${APIURL}/room/${roomID}/isAuth?client_session_id=${sessionID}`;
+            const URL = `${APIURL}/room/${roomID}/isAuth`;
             const response = await fetch(URL, {
                 method: 'GET',
                 headers: {
