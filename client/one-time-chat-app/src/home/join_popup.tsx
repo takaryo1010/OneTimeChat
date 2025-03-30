@@ -58,8 +58,8 @@ const JoinPopup: React.FC = () => {
         
     };
 
-    // URLからルームIDを取得してポップアップを表示
-    useEffect(() => {
+    // URLからルームIDを取得する関数
+    const getRoomIDFromURL = () => {
         const queryParams = new URLSearchParams(window.location.search);
         const roomIDFromURL = queryParams.get('room_id');
         setIsPopupVisible(!!roomIDFromURL);
@@ -72,7 +72,13 @@ const JoinPopup: React.FC = () => {
             }
         }
     }
+    // コンポーネントがマウントされたときにURLからルームIDを取得
+    useEffect(() => {
+        getRoomIDFromURL();
+    }
         , []);
+
+
 
     return (
         <div>
