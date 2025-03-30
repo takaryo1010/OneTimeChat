@@ -80,7 +80,6 @@ func (uc *RoomUsecase) HandleWebSocketConnection(w http.ResponseWriter, r *http.
 
 // broadcastToRoom broadcasts a message with sender information, room ID, and timestamp.
 func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, sessionID string) {
-
 	isClientInRoom := false
 	for _, c := range uc.RoomManager.Rooms[roomID].AuthenticatedClients {
 		if c.SessionID == sessionID {
@@ -88,13 +87,7 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 			break
 		}
 	}
-	if !isClientInRoom {
-		return
-	}
 
-	uc.RoomManager.Mu.Lock()
-	room, exists := uc.RoomManager.Rooms[roomID]
-	uc.RoomManager.Mu.Unlock()
 
 	stringSentence := string(sentence)
 
@@ -110,6 +103,17 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 	}
 	fmt.Println(messageType.Type)
 	fmt.Println(messageType.Content)
+
+
+
+	if !isClientInRoom && messageType.Type == "message" {
+		return
+	}
+
+	uc.RoomManager.Mu.Lock()
+	room, exists := uc.RoomManager.Rooms[roomID]
+	uc.RoomManager.Mu.Unlock()
+
 	if !exists {
 		return
 	}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Box, IconButton, Modal,Snackbar } from '@mui/material';
 import { Refresh, RemoveCircle,Info,Close } from '@mui/icons-material';  // RemoveCircle アイコンを使用
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -47,11 +47,9 @@ const Chat: React.FC = () => {
         const ws = new WebSocket(URL);
         ws.onopen = () => {
             setIsConnectedWS(true);
-            console.log('WebSocket connected');
         };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('Received:', data);
             if (data.type === 'message') {
                 setMessage((prevMessages) => [...prevMessages, { sender: data.sender, content: data.sentence, isMe: false }]);
             } else if (data.type === 'participants_update') {
@@ -64,15 +62,14 @@ const Chat: React.FC = () => {
         };
         ws.onclose = () => {
             setIsConnectedWS(false);
-            console.log('WebSocket closed');
         };
         ws.onerror = (error) => {
             setIsConnectedWS(false);
             console.error('WebSocket error:', error);
         };
         setWs(ws);
+        handleMessageUpdateParticipants(ws)
 
-        console.log('WebSocket:', ws);
     };
 
     const sendMessage = (message: string) => {
@@ -91,7 +88,6 @@ const Chat: React.FC = () => {
     const fetchRoomInfo = async () => {
         const ownerFlag = getCookie('is_owner') === 'true';
         setIsOwner(ownerFlag);
-        console.log('isOwner:', ownerFlag);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
         
@@ -105,13 +101,12 @@ const Chat: React.FC = () => {
             });
 
             const roomData = await RoomInforesponse.json();
-            console.log('Room Data:', roomData);
 
             setIsAuthenticated(true);
             setRoomInfo(roomData);
-            if (roomID) {
-                connectToRoom(roomID);
-            }
+            // if (roomID) {
+            //     connectToRoom(roomID);
+            // }
        
             const IsAuthURL = `${APIURL}/room/${roomID}/isAuth`;
             const response = await fetch(IsAuthURL, {
@@ -124,23 +119,18 @@ const Chat: React.FC = () => {
             const AuthInfo = await response.json();
             if (AuthInfo.isAuth) {
                 setIsAuthenticated(true);
-                if (roomID) {
-                    connectToRoom(roomID);
-                }
+
             } else {
                 if (isTryingToConnect) {
-                    console.log('Failed to authenticate');
                     setIsAuthenticated(false);
                 } else {
                     setIsAuthenticated(false);
-                    if (roomID) {
-                        connectToRoom(roomID);
-                    }
                     setIsTryingToConnect(true);
-                    console.log('Not Authenticated');
                 }
             }
-        
+        if (roomID) {
+            connectToRoom(roomID);
+        }
         setIsLoading(false);
     };
 
@@ -156,13 +146,12 @@ const Chat: React.FC = () => {
             credentials: 'include',
         });
         const participants = await response.json();
-        console.log('Participants:', participants);
         setAuthenticatedClients(participants.authenticatedClients);
         setUnauthenticatedClients(participants.unauthenticatedClients);
+        handleMessageUpdateParticipants(ws);
     };
 
     const handleKick = (clientId: string) => {
-        console.log(`Kick client with ID: ${clientId}`);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
         const URL = `${APIURL}/room/${roomID}/kick?client_id=${clientId}`;
@@ -173,11 +162,10 @@ const Chat: React.FC = () => {
             },
             credentials: 'include',
         });
-        handleMessageUpdateParticipants();
+        handleMessageUpdateParticipants(ws);
     };
 
     const handleApprove = async (clientId: string) => {
-        console.log(`Approve client with ID: ${clientId}`);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
         const URL = `${APIURL}/room/${roomID}/auth?client_id=${clientId}`;
@@ -194,13 +182,14 @@ const Chat: React.FC = () => {
         } else {
             console.error('Failed to approve');
         }
-        handleMessageUpdateParticipants();
+        handleMessageUpdateParticipants(ws);
     };
 
-    const handleMessageUpdateParticipants = () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
+    const handleMessageUpdateParticipants = (websocket:WebSocket) => {
+
+        if (websocket &&websocket.readyState === WebSocket.OPEN) {
             console.log('Sending participants_update');
-            ws.send(JSON.stringify({ type: 'participants_update' }));
+            websocket.send(JSON.stringify({ type: 'participants_update' }));
         }
     };
     const handleCopyURL = () => {
@@ -221,6 +210,21 @@ const Chat: React.FC = () => {
     useEffect(() => {
         setupRoom();
     }, []);
+
+//ws.readyStateがOPENの時にhandleMessageUpdateParticipantsを実行する
+
+    useEffect(() => {
+        if (isConnectedWS) {
+
+            fetchParticipants();
+        }
+    }
+    , [isConnectedWS]);
+
+
+
+
+
 
     if (isLoading) {
         return (
