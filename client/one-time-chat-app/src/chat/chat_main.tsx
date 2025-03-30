@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Box, IconButton } from '@mui/material';
-import { Refresh, RemoveCircle } from '@mui/icons-material';  // RemoveCircle アイコンを使用
+import { CircularProgress, Button, Typography, Box, IconButton, Modal,Snackbar } from '@mui/material';
+import { Refresh, RemoveCircle,Info,Close } from '@mui/icons-material';  // RemoveCircle アイコンを使用
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import './css/chat_main.css';
 import ChatArea from './chat_area.tsx';
 
@@ -31,7 +32,8 @@ const Chat: React.FC = () => {
     const [unauthenticatedClients, setUnauthenticatedClients] = useState<Clients[]>([]);
     const [isOwner, setIsOwner] = useState<boolean>(false);
     const [isTryingToConnect, setIsTryingToConnect] = useState<boolean>(false);
-
+    const [isInfoVisible, setIsInfoVisible] = useState<boolean>(false);
+    const [openSnackbar, setOpenSnackbar] = useState(false)
     const getCookie = (name: string) => {
         const cookies = document.cookie.split('; ');
         const cookie = cookies.find(row => row.startsWith(`${name}=`));
@@ -92,9 +94,9 @@ const Chat: React.FC = () => {
         console.log('isOwner:', ownerFlag);
         const roomID = getCookie('room_id');
         const APIURL = process.env.REACT_APP_API_URL;
-        if (isOwner) {
-            const URL = `${APIURL}/room/${roomID}`;
-            const response = await fetch(URL, {
+        
+            const RoomInfoURL = `${APIURL}/room/${roomID}`;
+            const RoomInforesponse = await fetch(RoomInfoURL, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,7 +104,7 @@ const Chat: React.FC = () => {
                 credentials: 'include',
             });
 
-            const roomData = await response.json();
+            const roomData = await RoomInforesponse.json();
             console.log('Room Data:', roomData);
 
             setIsAuthenticated(true);
@@ -110,33 +112,35 @@ const Chat: React.FC = () => {
             if (roomID) {
                 connectToRoom(roomID);
             }
-        } else if (roomID) {
-            const URL = `${APIURL}/room/${roomID}/isAuth`;
-            const response = await fetch(URL, {
+       
+            const IsAuthURL = `${APIURL}/room/${roomID}/isAuth`;
+            const response = await fetch(IsAuthURL, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
             });
-            const roomData = await response.json();
-            if (roomData.isAuth) {
+            const AuthInfo = await response.json();
+            if (AuthInfo.isAuth) {
                 setIsAuthenticated(true);
-                connectToRoom(roomID);
+                if (roomID) {
+                    connectToRoom(roomID);
+                }
             } else {
                 if (isTryingToConnect) {
                     console.log('Failed to authenticate');
                     setIsAuthenticated(false);
                 } else {
                     setIsAuthenticated(false);
-                    connectToRoom(roomID);
+                    if (roomID) {
+                        connectToRoom(roomID);
+                    }
                     setIsTryingToConnect(true);
                     console.log('Not Authenticated');
                 }
             }
-        } else {
-            console.log('Room ID not found');
-        }
+        
         setIsLoading(false);
     };
 
@@ -199,10 +203,19 @@ const Chat: React.FC = () => {
             ws.send(JSON.stringify({ type: 'participants_update' }));
         }
     };
-
+    const handleCopyURL = () => {
+        const roomURL = `${window.location.origin}?room_id=${roomInfo?.ID}`;
+        navigator.clipboard.writeText(roomURL).then(() => {
+            setOpenSnackbar(true);
+        });
+    };
     const setupRoom = () => {
         fetchRoomInfo();
         fetchParticipants();
+    };
+
+    const optimaizedRoomExpiration = () => {
+        return roomInfo?.expires ? new Date(roomInfo.expires).toLocaleString() : '不明';
     };
 
     useEffect(() => {
@@ -237,67 +250,145 @@ const Chat: React.FC = () => {
     }
 
     return (
-        <div className="chat-container">
-            {/* 画面左上に固定配置するボタン */}
-            <IconButton
-                className="refresh-button"
-                title="メンバー、リクエストのリストを更新"
-                onClick={setupRoom}
-                sx={{
-                    position: 'absolute',
-                    bottom: 10,
-                    left: 10,
-                    width: 60, // ボタンの幅
-                    height: 60, // ボタンの高さ
-                    bgcolor: 'primary.main', // 背景色
-                    color: 'white', // アイコンの色
-                    '&:hover': {
-                        bgcolor: 'primary.dark', // ホバー時に色を変更
-                    },
-                }}
-            >
-                <Refresh />
-            </IconButton>
 
-            <div className="members-section">
-                <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
-                {authenticatedClients.map((client) => (
-                    <div key={client.clientid} className="member-item">
-                        {client.name} {client.isowner && '(オーナー)'}
-                        {!client.isowner && isOwner && (
-                            <IconButton
-                                color="error"
-                                title="退室させる"
-                                onClick={() => handleKick(client.clientid)}
-                                sx={{ marginLeft: 2 }}
-                            >
-                                <RemoveCircle />
+        <div>
+
+            <div className="chat-container">
+
+                {/* 画面左上に固定配置するボタン */}
+                <IconButton
+                    className="refresh-button"
+                    title="メンバー、リクエストのリストを更新"
+                    onClick={setupRoom}
+                    sx={{
+                        position: 'absolute',
+                        bottom: 10,
+                        left: 10,
+                        width: 60, // ボタンの幅
+                        height: 60, // ボタンの高さ
+                        bgcolor: 'primary.main', // 背景色
+                        color: 'white', // アイコンの色
+                        '&:hover': {
+                            bgcolor: 'primary.dark', // ホバー時に色を変更
+                        },
+                    }}
+                >
+                    <Refresh />
+                
+                </IconButton>
+                {/*詳細ボタン*/}
+                <IconButton
+                    className="refresh-button"
+                    title="ルーム詳細"
+                    onClick={() => setIsInfoVisible(!isInfoVisible)}
+                    sx={{
+                        position: 'absolute',
+                        bottom: 10,
+                        left: 80,
+                        width: 60, // ボタンの幅
+                        height: 60, // ボタンの高さ
+                        bgcolor: 'primary.main', // 背景色
+                        color: 'white', // アイコンの色
+                        '&:hover': {
+                            bgcolor: 'primary.dark', // ホバー時に色を変更
+                        },
+                    }}
+                >
+                    <Info />
+                    
+                </IconButton>
+                <Modal
+                    open={isInfoVisible}
+                    onClose={() => setIsInfoVisible(false)}
+                    aria-labelledby="modal-title"
+                    aria-describedby="modal-description"
+                >
+                    <Box className="info-popup">
+                        <Box className="close-button">
+                            <IconButton onClick={() => setIsInfoVisible(false)}>
+                                    <Close />
                             </IconButton>
-                        )}
-                    </div>
-                ))}
-            </div>
+                        </Box>
+                        <Typography id="modal-title" variant="h4" component="h2" className="popup-title">
+                            ルーム詳細
+                        </Typography>
+                        <Typography variant="h6" className="popup-content">
+                            ルーム名: {roomInfo?.name}
+                        </Typography>
+                        
+                        
+                        <Box display="flex" alignItems="center" className="popup-content">
+                            <Typography variant="h6" >
+                                ルームID: {roomInfo?.ID}
+                            </Typography>
+                            <IconButton onClick={handleCopyURL} sx={{ ml: 1 }}>
+                                <Typography>
+                                    ルームURLをコピー
+                                </Typography>
+                                <ContentCopyIcon />
+                            </IconButton>
+                        </Box>
 
-            <ChatArea message={message} sendMessage={sendMessage} />
+                        {/* コピー完了の通知 */}
+                        <Snackbar
+                            open={openSnackbar}
+                            autoHideDuration={2000}
+                            onClose={() => setOpenSnackbar(false)}
+                            message="ルームURLをコピーしました"
+                        />
+                        <Typography variant="h6" className="popup-content">
+                            オーナー: {roomInfo?.owner}
+                        </Typography>
+                        <Typography variant="h6" className="popup-content">
+                            有効期限: {optimaizedRoomExpiration()}
+                        </Typography>
+                        <Typography variant="h6" className="popup-content">
+                            認証: {roomInfo?.requiresAuth ? '必要' : '不要'}
+                        </Typography>
+                    </Box>
+                </Modal>
+                
 
-            {isOwner && (
-                <div className="requests-section">
-                    <div className="requests-header">リクエスト ({unauthenticatedClients.length}人)</div>
-                    {unauthenticatedClients.map((client) => (
-                        <div key={client.clientid} className="request-item">
-                            {client.name}{' '}
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleApprove(client.clientid)}
-                                sx={{ marginLeft: 2 }}
-                            >
-                                承認
-                            </Button>
+                <div className="members-section">
+                    <div className="members-header">メンバー ({authenticatedClients.length}人)</div>
+                    {authenticatedClients.map((client) => (
+                        <div key={client.clientid} className="member-item">
+                            {client.name} {client.isowner && '(オーナー)'}
+                            {!client.isowner && isOwner && (
+                                <IconButton
+                                    color="error"
+                                    title="退室させる"
+                                    onClick={() => handleKick(client.clientid)}
+                                    sx={{ marginLeft: 2 }}
+                                >
+                                    <RemoveCircle />
+                                </IconButton>
+                            )}
                         </div>
                     ))}
                 </div>
-            )}
+
+                <ChatArea message={message} sendMessage={sendMessage} />
+
+                {isOwner && (
+                    <div className="requests-section">
+                        <div className="requests-header">リクエスト ({unauthenticatedClients.length}人)</div>
+                        {unauthenticatedClients.map((client) => (
+                            <div key={client.clientid} className="request-item">
+                                {client.name}{' '}
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleApprove(client.clientid)}
+                                    sx={{ marginLeft: 2 }}
+                                >
+                                    承認
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

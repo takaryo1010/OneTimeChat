@@ -50,12 +50,14 @@ const CreatePopup: React.FC = () => {
     };
 
     const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRoomName(event.target.value);
+        const value = event.target.value.slice(0, 16); // 16文字までに制限
+        setRoomName(value);
     };
 
     const handleUserNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setUserName(event.target.value);
-    };
+        const value = event.target.value.slice(0, 16); // 16文字までに制限
+        setUserName(value);
+        };
 
     const handleAuthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRequiresAuth(event.target.checked);

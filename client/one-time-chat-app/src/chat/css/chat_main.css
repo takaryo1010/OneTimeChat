@@ -52,6 +52,32 @@
 }
 
 
+.info-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* 他の要素の上に表示 */
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #333;    
+    margin-bottom: 10px;
+    background-color: #e6e6e6;
+    padding: 20px;
+    border-radius: 5px;
+}
+
 
 /* スマートフォン等の小さな画面でのレスポンシブ対応 */
 @media (max-width: 768px) {
