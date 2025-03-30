@@ -21,15 +21,17 @@ func PeriodicTask(rm *model.RoomManager) {
 }
 
 func deleteExpireSortRooms(rm *model.RoomManager) {
-	// 期限切れのルームを削除
+    now := time.Now()
+    newRooms := make([]*model.Room, 0, len(rm.ExpireSortRooms)) // ポインタのスライスに変更
 
-	for i, room := range rm.ExpireSortRooms {
-		if room.Expires.Before(time.Now()) {
-			rm.ExpireSortRooms = append(rm.ExpireSortRooms[:i], rm.ExpireSortRooms[i+1:]...)
-			delete(rm.Rooms, room.ID)
-			fmt.Println("Delete room:", room.ID, "by PeriodicTask")
-		} else if room.Expires.After(time.Now()) {
-			break
-		}
-	}
+    for _, room := range rm.ExpireSortRooms {
+        if room.Expires.After(now) {
+            newRooms = append(newRooms, room) // ポインタ型のまま追加
+        } else {
+            delete(rm.Rooms, room.ID) // 期限切れなら削除
+            fmt.Println("Delete room:", room.ID, "by PeriodicTask")
+        }
+    }
+
+    rm.ExpireSortRooms = newRooms // ポインタのスライスを代入
 }
