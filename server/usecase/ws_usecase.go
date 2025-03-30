@@ -88,7 +88,6 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 		}
 	}
 
-
 	stringSentence := string(sentence)
 
 	type MessageType struct {
@@ -103,8 +102,6 @@ func (uc *RoomUsecase) broadcastToRoom(roomID string, sentence []byte, sender, s
 	}
 	fmt.Println(messageType.Type)
 	fmt.Println(messageType.Content)
-
-
 
 	if !isClientInRoom && messageType.Type == "message" {
 		return
