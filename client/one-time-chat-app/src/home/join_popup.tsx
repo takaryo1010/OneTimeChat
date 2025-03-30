@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, Modal, IconButton, TextField, Tooltip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Icon from '@mdi/react';
@@ -57,6 +57,22 @@ const JoinPopup: React.FC = () => {
         }
         
     };
+
+    // URLからルームIDを取得してポップアップを表示
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const roomIDFromURL = queryParams.get('room_id');
+        setIsPopupVisible(!!roomIDFromURL);
+        if (roomIDFromURL) {
+            setRoomID(roomIDFromURL);
+            const errorMessage = validateRoomID(roomIDFromURL);
+            if (errorMessage) {
+                setError(errorMessage);
+                setErrorSentence(errorMessage);
+            }
+        }
+    }
+        , []);
 
     return (
         <div>
