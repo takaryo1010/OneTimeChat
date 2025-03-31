@@ -1,8 +1,12 @@
 package router
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/takaryo1010/OneTimeChat/server/controller"
@@ -10,10 +14,19 @@ import (
 
 func NewRouter(mc *controller.MainController) *echo.Echo {
 	e := echo.New()
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	
+	clientURL := os.Getenv("CLIENT_URL")
+	if clientURL == "" {
+		log.Fatal("CLIENT_URL is not set in the environment variables")
+	}
 
 	// CORS設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://192.168.1.9:3000"}, // フロントエンドのオリジン
+		AllowOrigins:     []string{"http://localhost:3000", "http://192.168.1.9:3000", clientURL}, // フロントエンドのオリジン
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete},
 		AllowCredentials: true,
 	}))
