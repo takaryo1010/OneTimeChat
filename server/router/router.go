@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +17,7 @@ func NewRouter(mc *controller.MainController) *echo.Echo {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-	
+
 	clientURL := os.Getenv("CLIENT_URL")
 	if clientURL == "" {
 		log.Fatal("CLIENT_URL is not set in the environment variables")
